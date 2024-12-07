@@ -9,6 +9,7 @@ globální knihovny - glibc (stdlib.h, string.h..)
    - vyvodit velikost instrukce, aktualizovat pozici v souboru (výstupním)
    - do dynamického pole uložení struktury instrukce se zjištěnými operandy, velikostí..
    _pokud label -> zapsat aktuální pozici, název do tabulky symbolů (nejspíš prostě dynamické pole)_
+
    _pokud se objeví nečekaný znak, operand, přesáhnutý limit immediate .. error, exit_
 - (porovnání podle předdefinované struktury instrukcí a jejich vlastností - implementace zatim nejasná, ale nejspíš tabulka na ktery vyhledavani s tokenem => 	match vrati strukturu s info o instrukci, jinak to neni instrukce)
 3. **druhý průchod (na strukturách instrukce)**
@@ -21,4 +22,5 @@ globální knihovny - glibc (stdlib.h, string.h..)
 
 Předpokládám, že implementace bude vrcholný C experience => pouze standardní knihovna.
 **další rešerše architektury potřeba**
+
 **další rešerše formátu ELF potřeba**
