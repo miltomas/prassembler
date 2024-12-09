@@ -8,6 +8,6 @@
 #define OUTPUT_FORMATS_COUNT 2
 
 extern char *options_output_formats[];
-int options_parse(char *argv[], enum EOutFormat *format, char **file_name);
+int options_parse(char *argv[], EOutFormat *format, char **file_name);
 
 #endif

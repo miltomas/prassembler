@@ -3,7 +3,8 @@
 #include "assembler.h"
 #include "options.h"
 
-enum EOutFormat output_file_format;
+EOutFormat output_file_format;
+
 int main(int argc, char *argv[])
 {
     if (argc != EXPECTED_ARGUMENTS_COUNT) {
@@ -13,5 +14,6 @@ int main(int argc, char *argv[])
     char *file_name;
     if (options_parse(argv + 1, &output_file_format, &file_name) == EXIT_FAILURE)
         return EXIT_FAILURE;
+    if (file_name == NULL) {}
     return EXIT_SUCCESS;
 }
