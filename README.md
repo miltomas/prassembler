@@ -8,6 +8,7 @@ globální knihovny - glibc (stdlib.h, string.h..)
    - ověřit počet operandů k instrukci, jejich typ (ukládání tokenů v poli, index dopředu)
    - vyvodit velikost instrukce, aktualizovat pozici v souboru (výstupním)
    - do dynamického pole uložení struktury instrukce se zjištěnými operandy, velikostí..
+     
    _pokud label -> zapsat aktuální pozici, název do tabulky symbolů (nejspíš prostě dynamické pole)_
 
    _pokud se objeví nečekaný znak, operand, přesáhnutý limit immediate .. error, exit_
@@ -17,10 +18,12 @@ globální knihovny - glibc (stdlib.h, string.h..)
    - nahradit labely adresami (relativní jumpy zatim neexistují)
    - enkódovat instrukci podle šablony
    - poslat enkódovanou instrukci na output (zanedbani ELF)
+     
    _pokud label není definovaný .. error, exit_
 4. **epilog**
 
 Předpokládám, že implementace bude vrcholný C experience => pouze standardní knihovna.
+
 **další rešerše architektury potřeba**
 
 **další rešerše formátu ELF potřeba**
