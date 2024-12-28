@@ -27,11 +27,12 @@ typedef enum {
     LABEL
 } ETokenType;
 
-/*
+struct InstrFuncs;
 typedef struct {
-        
+    int operand_count;
+    struct InstrFuncs *funcs;
+    struct Token *operands;
 } Instruction;
-*/
 
 struct Immediate {
     ESize size;
@@ -63,13 +64,21 @@ struct Label {
 struct Token {
     ETokenType type;
     union {
-      //Instruction *instr;
+        Instruction *instr;
         struct Immediate imm;
         MemAccess *mem;
         struct Register reg;
         struct LegPrefixes prefix;
         struct Label label;
     };
+};
+
+struct Operand {
+};
+
+struct InstrFuncs {
+    int (*validate)(struct Token tokens[], int );
+    int16_t (*encode)(Instruction *instr);
 };
 
 #endif
