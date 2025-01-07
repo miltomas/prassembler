@@ -29,14 +29,14 @@ typedef enum {
 
 struct InstrFuncs;
 typedef struct {
-    int operand_count;
     struct InstrFuncs *funcs;
     struct Token *operands;
+    int operand_count;
 } Instruction;
 
 struct Immediate {
-    ESize size;
     int64_t value;
+    ESize size;
 };
 
 typedef struct {
@@ -58,7 +58,6 @@ struct LegPrefixes {
 
 struct Label {
     char *value;
-    int refcount;
 };
 
 struct Token {
@@ -77,7 +76,7 @@ struct Operand {
 };
 
 struct InstrFuncs {
-    int (*validate)(struct Token tokens[], int );
+    int (*validate)(int cnt, struct Token tokens[cnt]);
     int16_t (*encode)(Instruction *instr);
 };
 
