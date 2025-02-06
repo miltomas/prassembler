@@ -1,19 +1,15 @@
-#include <stdio.h>
+#include "files.h"
+#include <assert.h>
 #include <stdlib.h>
-#include "assembler.h"
-#include "options.h"
 
-EOutFormat output_file_format;
+int main(int argc, char *argv[]) {
+	struct opt_options opts;
+	if (opt_parse(argc, argv, &opts) == EXIT_FAILURE)
+		return EXIT_FAILURE;
 
-int main(int argc, char *argv[])
-{
-    if (argc != EXPECTED_ARGUMENTS_COUNT) {
-        fprintf(stderr, "Invalid num of options.\n");
-        return EXIT_FAILURE;
-    }
-    char *file_name;
-    if (options_parse(argv + 1, &output_file_format, &file_name) == EXIT_FAILURE)
-        return EXIT_FAILURE;
-    if (file_name == NULL) {}
-    return EXIT_SUCCESS;
+	FILE *file_in, *file_out;
+	if (init_files(&file_in, &file_out, &opts) == EXIT_FAILURE)
+		return EXIT_FAILURE;
+
+	return EXIT_SUCCESS;
 }

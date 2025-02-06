@@ -1,13 +1,19 @@
 #ifndef ARGS_PARSE
 #define ARGS_PARSE
 
-#include <stdlib.h>
 #include "assembler.h"
 
-#define EXPECTED_ARGUMENTS_COUNT 5
 #define OUTPUT_FORMATS_COUNT 2
 
-extern char *options_output_formats[];
-int options_parse(char *argv[], EOutFormat *format, char **file_name);
+#define WARN "\033[0;33mW\033[0m:"
+#define ERR "\033[0;31mE\033[0m:"
+
+struct opt_options {
+	const char *filename_in;
+	const char *filename_out;
+	EOutFormat format_out;
+};
+
+int opt_parse(int argc, char *argv[], struct opt_options *opts);
 
 #endif
