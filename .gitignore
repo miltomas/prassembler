@@ -4,3 +4,6 @@
 /build/
 /bin/
 /deps/
+
+compile_commands.json
+.cache
