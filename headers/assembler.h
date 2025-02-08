@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#define WARN "\033[0;33mW\033[0m:"
+#define ERR "\033[0;31mE\033[0m:"
+#define LICO "%lo:%lo | "
+
 typedef enum { RAW, ELF } EOutFormat;
 
 typedef enum {
@@ -61,7 +65,6 @@ struct Label {
 };
 
 struct Token {
-    ETokenType type;
     union {
         Instruction *instr;
         struct Immediate imm;
@@ -70,6 +73,7 @@ struct Token {
         struct LegPrefixes prefix;
         struct Label label;
     };
+    int8_t type;
 };
 
 struct Operand {

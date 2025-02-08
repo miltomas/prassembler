@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int init_files(FILE **file_in, FILE **file_out, struct opt_options *opts) {
+int files_init(FILE **file_in, FILE **file_out, struct opt_options *opts) {
 	if (opts->filename_in == NULL) {
 		fprintf(stderr, WARN "Input file not found! Falling back to stdin\n");
 		*file_in = stdin;

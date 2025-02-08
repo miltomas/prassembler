@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int opt_parse(int argc, char *argv[], struct opt_options *opts) {
+int opt_options_parse(int argc, char *argv[], struct opt_options *opts) {
 	char *opts_out_formats[] = {[RAW] = "raw", [ELF] = "elf"};
 	char *format = NULL;
 
