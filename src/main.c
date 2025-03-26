@@ -12,9 +12,15 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 
 	// parse line by line rather than this
-	struct Token *tokens = malloc(256 * sizeof(struct Token));
-	if (tkn_parse_file(file_in, &tokens) == EXIT_FAILURE)
-		return EXIT_FAILURE;
+	// struct Token *tokens = malloc(256 * sizeof(struct Token));
+	// if (tkn_parse_file(file_in, &tokens) == EXIT_FAILURE)
+	//   return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
+}
+
+// local output file position counter
+uint fpos;
+Instruction **traverse_file(void) {
+		
 }
