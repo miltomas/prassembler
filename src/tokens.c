@@ -45,18 +45,15 @@ int tkn_parse_line(FILE *file, struct Token **buf) {
 				fprintf(stdout, LICO ERR "Malformed memaccess!", line, word - cbuf);
 				g_tkn_error = 1;
 			}
-			continue;
 		}
-		if (isdigit(word[0])) {
+		else if (isdigit(word[0])) {
 			buf[i]->type = IMMEDIATE;
 			if (!imm_try_parse(word, &buf[i]->imm)) {
 				fprintf(stdout, LICO ERR "Malformed immediate!", line, word - cbuf);
 				g_tkn_error = 1;
 			}
-			continue;
 		}
-
-		if (reg_try_parse(word, &buf[i]->reg)) {
+		else if (reg_try_parse(word, &buf[i]->reg)) {
 			buf[i]->type = REGISTER;
 		} else if (prefix_try_parse(word, &buf[i]->prefix)) {
 			buf[i]->type = PREFIX;
