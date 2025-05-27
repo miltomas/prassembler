@@ -23,7 +23,7 @@ int tkn_parse_line(FILE *file, struct Token **buf) {
 	if (len == -1)
 		return -1;
 	if ((u_long)len != strlen(cbuf)) {
-		fprintf(stderr, ERR LICO "Null byte detected!\n", line, len);
+		PERRLICO("Null byte detected!\n", line, len);
 		return 1;
 	}
 	// no newline
@@ -37,7 +37,7 @@ int tkn_parse_line(FILE *file, struct Token **buf) {
 		if (word[0] == ';')
 			break;
 		if (i == TKN_LINE_MAX) {
-			fprintf(stderr, ERR LICO "Too many tokens!", line, (u_long)0);
+			PERRLICO("Too many tokens!", line, (u_long)0);
 			g_tkn_error = 1;
 			break;
 		}
@@ -45,14 +45,14 @@ int tkn_parse_line(FILE *file, struct Token **buf) {
 		if (word[0] == '[') {
 			buf[i]->type = MEMACCESS;
 			if (!mem_try_parse(word, &buf[i]->mem)) {
-				fprintf(stdout, LICO ERR "Malformed memaccess!", line, word - cbuf);
+				PERRLICO("Malformed memaccess!", line, word - cbuf);
 				g_tkn_error = 1;
 			}
 		}
 		else if (isdigit(word[0])) {
 			buf[i]->type = IMMEDIATE;
 			if (!imm_try_parse(word, &buf[i]->imm)) {
-				fprintf(stdout, LICO ERR "Malformed immediate!", line, word - cbuf);
+				PERRLICO("Malformed immediate!", line, word - cbuf);
 				g_tkn_error = 1;
 			}
 		}
