@@ -34,10 +34,13 @@ int tkn_parse_line(FILE *file, struct Token **buf) {
 
 	for (int i = 0; word != NULL; i++) {
 
-		if (i == TKN_LINE_MAX)
-			break;
 		if (word[0] == ';')
 			break;
+		if (i == TKN_LINE_MAX) {
+			fprintf(stderr, ERR LICO "Too many tokens!", line, (u_long)0);
+			g_tkn_error = 1;
+			break;
+		}
 
 		if (word[0] == '[') {
 			buf[i]->type = MEMACCESS;
