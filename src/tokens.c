@@ -37,6 +37,7 @@ int tkn_parse_line(FILE *file, struct Token **tkn_buf
 	int i = 0;
 	while (word != NULL) {
 
+		// comment - stop parsing line
 		if (word[0] == ';')
 			break;
 
