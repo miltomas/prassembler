@@ -47,12 +47,8 @@ int tkn_parse_line(FILE *file, struct Token **tkn_buf
 				PERRLICO("Malformed label!", line, colon - cbuf);
 				g_tkn_error = 1;
 			}
-			char *const next_char = colon + 1;
-			const int overflow = next_char - cbuf == len;
 
-			word = overflow || *next_char == '\0'
-					   ? strtok_r(NULL, " \t", &saveptr)
-					   : next_char;
+			word = *(colon + 1) == '\0' ? strtok_r(NULL, " \t", &saveptr) : colon + 1;
 			// save label to caller buffer
 			// ...
 			continue;
