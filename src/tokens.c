@@ -37,9 +37,13 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 	while (word != NULL) {
 
 		// comment - stop parsing line
-		if (word[0] == ';')
-			break;
-
+		char *const comment = strchr(word, ';');
+		if (comment) {
+			// prematurely end word at comment
+			*comment = '\0';
+			// stop loop by strtok
+			saveptr = "\0";
+		}
 		char *const colon = strchr(word, ':');
 
 		if (colon) {
