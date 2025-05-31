@@ -1,3 +1,4 @@
+#include "tokens.h"
 #include "assembler.h"
 #include "immediates.h"
 #include "instructions.h"
@@ -8,8 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define TKN_LINE_MAX 16
 
 // if set, output errors, exit
 int g_tkn_error;

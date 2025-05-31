@@ -7,4 +7,6 @@
 int tkn_parse_file(FILE *file, struct Token **buf);
 int tkn_parse_line(FILE *file, struct Token **buf);
 
+#define TKN_LINE_MAX 16
+
 #endif
