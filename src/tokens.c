@@ -13,7 +13,7 @@
 // if set, output errors, exit
 int g_tkn_error;
 
-int tkn_parse_line(FILE *file, struct Token **tkn_buf
+int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 				   /* label declarations */) {
 	static u_long line;
 
@@ -44,7 +44,7 @@ int tkn_parse_line(FILE *file, struct Token **tkn_buf
 
 		if (colon) {
 			if (colon == word) {
-				PERRLICO("Malformed label!", line, colon - cbuf);
+				PERRLICO("Malformed label!\n", line, colon - cbuf);
 				g_tkn_error = 1;
 			}
 
@@ -55,31 +55,33 @@ int tkn_parse_line(FILE *file, struct Token **tkn_buf
 		}
 
 		if (i == TKN_LINE_MAX) {
-			PERRLICO("Too many tokens!", line, (u_long)0);
+			PERRLICO("Too many tokens!\n", line, (u_long)0);
 			g_tkn_error = 1;
 			break;
 		}
 
+
+
 		if (word[0] == '[') {
-			tkn_buf[i]->type = MEMACCESS;
-			if (!mem_try_parse(word, &tkn_buf[i]->mem)) {
-				PERRLICO("Malformed memaccess!", line, word - cbuf);
+			(*tkn_buf)[i]->type = MEMACCESS;
+			if (!mem_try_parse(word, &(*tkn_buf)[i]->mem)) {
+				PERRLICO("Malformed memaccess!\n", line, word - cbuf);
 				g_tkn_error = 1;
 			}
 		} else if (isdigit(word[0])) {
-			tkn_buf[i]->type = IMMEDIATE;
-			if (!imm_try_parse(word, &tkn_buf[i]->imm)) {
-				PERRLICO("Malformed immediate!", line, word - cbuf);
+			(*tkn_buf)[i]->type = IMMEDIATE;
+			if (!imm_try_parse(word, &(*tkn_buf)[i]->imm)) {
+				PERRLICO("Malformed immediate!\n", line, word - cbuf);
 				g_tkn_error = 1;
 			}
-		} else if (reg_try_parse(word, &tkn_buf[i]->reg)) {
-			tkn_buf[i]->type = REGISTER;
-		} else if (prefix_try_parse(word, &tkn_buf[i]->prefix)) {
-			tkn_buf[i]->type = PREFIX;
-		} else if (instr_try_parse(word, &tkn_buf[i]->instr)) {
-			tkn_buf[i]->type = INSTRUCTION;
+		} else if (reg_try_parse(word, &(*tkn_buf)[i]->reg)) {
+			(*tkn_buf)[i]->type = REGISTER;
+		} else if (prefix_try_parse(word, &(*tkn_buf)[i]->prefix)) {
+			(*tkn_buf)[i]->type = PREFIX;
+		} else if (instr_try_parse(word, &(*tkn_buf)[i]->instr)) {
+			(*tkn_buf)[i]->type = INSTRUCTION;
 		} else {
-			tkn_buf[i]->type = LABEL;
+			(*tkn_buf)[i]->type = LABEL;
 		}
 
 		i++;

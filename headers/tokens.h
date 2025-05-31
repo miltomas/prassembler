@@ -4,9 +4,9 @@
 #include "assembler.h"
 #include <stdio.h>
 
-int tkn_parse_file(FILE *file, struct Token **buf);
-int tkn_parse_line(FILE *file, struct Token **buf);
-
 #define TKN_LINE_MAX 16
+
+int tkn_parse_file(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]);
+int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]);
 
 #endif
