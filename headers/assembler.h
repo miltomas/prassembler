@@ -5,7 +5,7 @@
 
 #define WARN "\033[0;33mW\033[0m:"
 #define ERR "\033[0;31mE\033[0m:"
-#define LICO "%lo:%lo | "
+#define LICO "%lu:%lu | "
 #define PERRLICO(message, line, col) fprintf(stderr, ERR LICO message, line, col)
 #define PWARNLICO(message, line, col) fprintf(stderr, WARN LICO message, line, col)
 
