@@ -35,7 +35,6 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 
 	int i = 0;
 	while (word != NULL) {
-
 		// comment - stop parsing line
 		char *const comment = strchr(word, ';');
 		if (comment) {
@@ -44,27 +43,21 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 			// stop loop by strtok
 			saveptr = "\0";
 		}
+
+		// local globals
+		int declare_label;
+		int declare_label_success = 0;
+
+
 		char *const colon = strchr(word, ':');
+		if ((declare_label = colon != NULL))
+			*colon = '\0';
 
-		if (colon) {
-			if (colon == word) {
-				PERRLICO("Malformed label!\n", line, colon - cbuf);
-				g_tkn_error = 1;
-			}
-
-			word = *(colon + 1) == '\0' ? strtok_r(NULL, " \t", &saveptr) : colon + 1;
-			// save label to caller buffer
-			// ...
-			continue;
-		}
-
-		if (i == TKN_LINE_MAX) {
+		if (!declare_label && i == TKN_LINE_MAX) {
 			PERRLICO("Too many tokens!\n", line, (u_long)0);
 			g_tkn_error = 1;
 			break;
 		}
-
-
 
 		if (word[0] == '[') {
 			(*tkn_buf)[i]->type = MEMACCESS;
@@ -85,7 +78,12 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 		} else if (instr_try_parse(word, &(*tkn_buf)[i]->instr)) {
 			(*tkn_buf)[i]->type = INSTRUCTION;
 		} else {
+			declare_label_success = 1;
 			(*tkn_buf)[i]->type = LABEL;
+		}
+
+		if (declare_label && (!declare_label_success || colon == word)) {
+			PERRLICO("Malformed label!\n", line, word - cbuf);
 		}
 
 		i++;
