@@ -13,6 +13,15 @@
 // if set, output errors, exit
 int g_tkn_error;
 
+static const char *const g_tkn_conflict_map[] = {
+	[INSTRUCTION] = "INSTRUCTION", [IMMEDIATE] = "IMMEDIATE",
+	[MEMACCESS] = "MEMACCESS",     [REGISTER] = "REGISTER",
+	[PREFIX] = "PREFIX",
+};
+
+#define TKN_DECLARE_LABEL_CONFLICT(type)                                       \
+declare_label_success ? "Empty label" : g_tkn_conflict_map[type]
+
 int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 				   /* label declarations */) {
 	static u_long line;
@@ -48,12 +57,11 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 		int declare_label;
 		int declare_label_success = 0;
 
-
 		char *const colon = strchr(word, ':');
 		if ((declare_label = colon != NULL))
 			*colon = '\0';
 
-		if (!declare_label && i == TKN_LINE_MAX) {
+		if (i == TKN_LINE_MAX) {
 			PERRLICO("Too many tokens!\n", line, (u_long)0);
 			g_tkn_error = 1;
 			break;
@@ -82,8 +90,16 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]
 			(*tkn_buf)[i]->type = LABEL;
 		}
 
-		if (declare_label && (!declare_label_success || colon == word)) {
-			PERRLICO("Malformed label!\n", line, word - cbuf);
+		if (declare_label) {
+			if (!declare_label_success || colon == word) {
+				PERRLICO("Malformed label! : Conflict -> %s\n", line, word - cbuf,
+			 TKN_DECLARE_LABEL_CONFLICT((*tkn_buf)[i]->type));
+				g_tkn_error = 1;
+			}
+			// save to caller buffer
+			// ...
+			word = *(colon + 1) == '\0' ? strtok_r(NULL, " \t", &saveptr) : colon + 1;
+			continue;
 		}
 
 		i++;

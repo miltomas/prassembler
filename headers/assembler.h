@@ -6,8 +6,8 @@
 #define WARN "\033[0;33mW\033[0m:"
 #define ERR "\033[0;31mE\033[0m:"
 #define LICO "%lu:%lu | "
-#define PERRLICO(message, line, col) fprintf(stderr, ERR LICO message, line, col)
-#define PWARNLICO(message, line, col) fprintf(stderr, WARN LICO message, line, col)
+#define PERRLICO(message, ...) fprintf(stderr, ERR LICO message, __VA_ARGS__)
+#define PWARNLICO(message, ...) fprintf(stderr, WARN LICO message, __VA_ARGS__)
 
 typedef enum { RAW, ELF } EOutFormat;
 
