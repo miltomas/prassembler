@@ -3,10 +3,19 @@
 
 #include "assembler.h"
 #include <stdio.h>
+#include <sys/types.h>
 
 #define TKN_LINE_MAX 16
 
-int tkn_parse_file(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]);
-int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]);
+// if set, output errors, exit
+extern int g_tkn_error;
+
+extern u_long g_tkn_line_num;
+// saved last parsed line, not freed!
+extern char *g_tkn_last_line;
+
+// free last line before calling again!
+extern int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX],
+				   int *label_n, struct Label **label_buf);
 
 #endif
