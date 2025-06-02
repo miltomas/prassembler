@@ -34,14 +34,17 @@ typedef enum {
 } ETokenType;
 
 struct InstrFuncs;
-typedef struct {
+struct Instruction {
     struct InstrFuncs *funcs;
-    struct Token *operands;
-    int operand_count;
-} Instruction;
+};
 
 struct Immediate {
-    int64_t value;
+	union {
+		int64_t value64;
+		int32_t value32;
+		int16_t value16;
+		int8_t value8;
+	};
     ESize size;
 };
 
@@ -58,7 +61,7 @@ struct Register {
     EGPRegister type;
 };
 
-struct LegPrefixes {
+struct Prefix {
     
 };
 
@@ -68,11 +71,11 @@ struct Label {
 
 struct Token {
     union {
-        Instruction *instr;
+        struct Instruction *instr;
         struct Immediate imm;
         MemAccess *mem;
         struct Register reg;
-        struct LegPrefixes prefix;
+        struct Prefix prefix;
         struct Label label;
     };
     int8_t type;
@@ -83,7 +86,7 @@ struct Operand {
 
 struct InstrFuncs {
     int (*validate)(int cnt, struct Token tokens[cnt]);
-    int16_t (*encode)(Instruction *instr);
+    int16_t (*encode)(struct Instruction *instr);
 };
 
 #endif

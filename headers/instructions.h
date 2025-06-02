@@ -5,6 +5,6 @@
 #include <stdint.h>
 // Instruction parsing interface
 
-int instr_try_parse(char *str, Instruction **target);
+int instr_try_parse(char *str, struct Instruction **target);
 
 #endif

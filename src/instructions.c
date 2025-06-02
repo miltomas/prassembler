@@ -14,11 +14,7 @@ static uint8_t g_mnemonics[][MAX_MNEMONIC_SIZE] = {
     "movzx",
 };
 
-#ifndef __SIZEOF_INT128__
-#error "__uint128_t must be supported"
-#endif
-
-int instr_try_parse(char *str, Instruction **target) {
+int instr_try_parse(char *str, struct Instruction **target) {
 	// potrebuju implementovat hash table :[ to bude nejlepsi
 	return 1;
 }
