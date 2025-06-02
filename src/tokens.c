@@ -42,7 +42,7 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX],
 	g_tkn_last_line = strdup(cbuf);
 
 	char *word, *saveptr;
-	word = strtok_r(cbuf, " \t", &saveptr);
+	word = strtok_r(cbuf, " \t,", &saveptr);
 
 	int tkn_i = 0;
 	int label_i = 0;
@@ -106,7 +106,7 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX],
 
 			if (label_i == *label_n) {
 				*label_n *= 2;
-				*label_buf = reallocarray(label_buf, *label_n, sizeof(struct Label));
+				*label_buf = reallocarray(*label_buf, *label_n, sizeof(struct Label));
 			}
 
 			(*label_buf)[label_i] = (struct Label){strdup(word)};
@@ -118,7 +118,7 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX],
 		// LABELS
 
 		tkn_i++;
-		word = strtok_r(NULL, " \t", &saveptr);
+		word = strtok_r(NULL, " \t,", &saveptr);
 	}
 
 	free(cbuf);
