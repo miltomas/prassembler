@@ -17,7 +17,7 @@ char *g_tkn_last_line;
 
 static const char *const g_tkn_conflict_map[] = {
 	[INSTRUCTION] = "INSTRUCTION", [IMMEDIATE] = "IMMEDIATE",
-	[MEMACCESS] = "MEMACCESS",     [REGISTER] = "REGISTER",
+	[MEMACCESS] = "MEMACCESS",	   [REGISTER] = "REGISTER",
 	[PREFIX] = "PREFIX",
 };
 
@@ -72,17 +72,18 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX],
 		}
 
 		struct Token *token = (*tkn_buf)[tkn_i];
+		u_long column = word - cbuf;
 
-		if (word[0] == '[') {
+		if (word[0] == '[' || word[0] == ']') {
 			token->type = MEMACCESS;
 			if (!mem_try_parse(word, &token->mem)) {
-				PERRLICO("Malformed memaccess!\n", g_tkn_line_num, word - cbuf);
+				PDIAGLINE(ERR, "Malformed memaccess!\n", column);
 				g_tkn_error = 1;
 			}
 		} else if (isdigit(word[0])) {
 			token->type = IMMEDIATE;
 			if (!imm_try_parse(word, &token->imm)) {
-				PERRLICO("Malformed immediate!\n", g_tkn_line_num, word - cbuf);
+				PDIAGLINE(ERR, "Malformed immediate!\n", column);
 				g_tkn_error = 1;
 			}
 		} else if (reg_try_parse(word, &token->reg)) {
@@ -99,19 +100,21 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX],
 		// LABELS
 		if (is_declaring_label) {
 			if (token->type != LABEL || colon == word) {
-				PERRLICO("Malformed label! : Conflict -> %s\n", g_tkn_line_num,
-			 word - cbuf, TKN_DECLARE_LABEL_CONFLICT(token->type));
+				PDIAGLINE(ERR, "Malformed label! : Conflict -> %s\n", column,
+			  		TKN_DECLARE_LABEL_CONFLICT(token->type));
 				g_tkn_error = 1;
 			}
 
 			if (label_i == *label_n) {
 				*label_n *= 2;
-				*label_buf = reallocarray(*label_buf, *label_n, sizeof(struct Label));
+				*label_buf =
+					reallocarray(*label_buf, *label_n, sizeof(struct Label));
 			}
 
 			(*label_buf)[label_i] = (struct Label){strdup(word)};
 
-			word = *(colon + 1) == '\0' ? strtok_r(NULL, " \t", &saveptr) : colon + 1;
+			word = *(colon + 1) == '\0' ? strtok_r(NULL, " \t", &saveptr)
+				: colon + 1;
 			label_i++;
 			continue;
 		}
