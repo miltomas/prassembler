@@ -22,7 +22,8 @@ extern char *g_tkn_last_line;
 			(int)(column), "")
 
 // free last line before calling again!
-extern int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX],
-						  int *label_n, struct Label **label_buf);
+extern int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]);
+extern int g_tkn_label_buf_i;
+extern struct Label *g_tkn_label_buf;
 
 #endif
