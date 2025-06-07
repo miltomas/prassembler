@@ -22,6 +22,11 @@ struct tkn_ParseResult {
 	char *parse_end;
 };
 
+static struct tkn_TokenParser {
+	u_int comment_declared : 1;
+	u_long column;
+} parser_state;
+
 static const char *const g_tkn_conflict_map[] = {
 	[INSTRUCTION] = "INSTRUCTION", [IMMEDIATE] = "IMMEDIATE",
 	[MEMACCESS] = "MEMACCESS",     [REGISTER] = "REGISTER",
@@ -35,7 +40,14 @@ static int tkn_label_buf_n = 128;
 int g_tkn_label_buf_i;
 struct Label *g_tkn_label_buf;
 
-void tkn_add_label(struct Label label) {
+void tkn_add_label(struct Label label, struct tkn_ParseResult *results,
+				   ETokenType type) {
+	if (!results->succeded) {
+		PDIAGLINE(ERR, "Malformed label! : Conflict -> %s\n", parser_state.column,
+			TKN_DECLARE_LABEL_CONFLICT(type));
+		g_tkn_error = 1;
+		return;
+	}
 	if (g_tkn_label_buf_i == tkn_label_buf_n) {
 		tkn_label_buf_n *= 2;
 		g_tkn_label_buf =
@@ -43,8 +55,6 @@ void tkn_add_label(struct Label label) {
 	}
 	g_tkn_label_buf[g_tkn_label_buf_i++] = label;
 }
-
-int g_token_comment = 0;
 
 // parse basic token types (non memaccess, that could be spread out)
 ETokenType tkn_parse_token(char *restrict const word,
@@ -110,7 +120,8 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
 	cbuf[len - 1] = '\0';
 
 	g_tkn_last_line = strdup(cbuf);
-	g_token_comment = 0;
+	g_tkn_label_buf_i = 0;
+	parser_state.comment_declared = 0;
 
 	char *word, *saveptr;
 	word = strtok_r(cbuf, " \t,", &saveptr);
@@ -125,7 +136,7 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
 
 		struct Token *token = (*tkn_buf)[tkn_i];
 		struct Label *label = &(g_tkn_label_buf[g_tkn_label_buf_i]);
-		u_long column = word - cbuf;
+		u_long column = parser_state.column = word - cbuf;
 
 		struct tkn_ParseResult results = {0};
 		if (word[0] == '[' || word[0] == ']') {
@@ -135,12 +146,12 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
 			tkn_parse_token(word, &results, token, label);
 		}
 		if (results.comment_declared)
-			g_token_comment = 1;
-		if (g_token_comment)
+			parser_state.comment_declared = 1;
+		if (parser_state.comment_declared)
 			saveptr = "\0";
 
 		if (token->type == IMMEDIATE && !results.succeded) {
-			PDIAGLINE(ERR, "Malformed immediate!\n", column);
+			PDIAGLINE(ERR, "Malformed immediate!\n", parser_state.column);
 			g_tkn_error = 1;
 		}
 		if (token->type == MEMACCESS && !results.succeded) {
@@ -148,21 +159,12 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
 			g_tkn_error = 1;
 		}
 
-		// LABELS
 		if (results.label_declared) {
-			if (!results.succeded) {
-				PDIAGLINE(ERR, "Malformed label! : Conflict -> %s\n", column,
-			  TKN_DECLARE_LABEL_CONFLICT(token->type));
-				g_tkn_error = 1;
-			}
-
-			tkn_add_label(token->label);
-
+			tkn_add_label(*label, &results, token->type);
 			word = *(results.parse_end + 1) == '\0' ? strtok_r(NULL, " \t", &saveptr)
 				: results.parse_end + 1;
 			continue;
 		}
-		// LABELS
 
 		tkn_i++;
 		word = strtok_r(NULL, " \t,", &saveptr);
