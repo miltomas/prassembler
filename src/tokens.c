@@ -56,10 +56,19 @@ void tkn_add_label(struct Label label, struct tkn_ParseResult *results,
 	g_tkn_label_buf[g_tkn_label_buf_i++] = label;
 }
 
+void tkn_clear_labels() {
+	for (int i = 0; i <= g_tkn_label_buf_i; i++) {
+		free(g_tkn_label_buf[i].value);
+	}
+	g_tkn_label_buf_i = 0;
+}
+
 // parse basic token types (non memaccess, that could be spread out)
 ETokenType tkn_parse_token(char *restrict const word,
 						   struct tkn_ParseResult *result, struct Token *token,
 						   struct Label *label) {
+	result->succeded = 1;
+
 	char *const comment = strchr(word, ';');
 	if (comment) {
 		*comment = '\0';
@@ -115,7 +124,7 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
 	cbuf[len - 1] = '\0';
 
 	g_tkn_last_line = strdup(cbuf);
-	g_tkn_label_buf_i = 0;
+	tkn_clear_labels();
 	parser_state.comment_declared = 0;
 
 	char *word, *saveptr;
