@@ -62,19 +62,16 @@ ETokenType tkn_parse_token(char *restrict const word,
 						   struct Label *label) {
 	char *const comment = strchr(word, ';');
 	if (comment) {
-		// prematurely end word at comment
 		*comment = '\0';
 		result->comment_declared = 1;
 	}
 
-	// LABELS
 	char *const colon = strchr(word, ':');
 	if (colon) {
 		*colon = '\0';
 		result->label_declared = 1;
 		result->parse_end = colon;
 	}
-	// LABELS
 
 	if (isdigit(word[0])) {
 		token->type = IMMEDIATE;
@@ -93,7 +90,6 @@ ETokenType tkn_parse_token(char *restrict const word,
 		token->label = (struct Label){strdup(word)};
 	}
 
-	// LABELS
 	if (result->label_declared) {
 		*label = token->label;
 
@@ -101,7 +97,6 @@ ETokenType tkn_parse_token(char *restrict const word,
 			result->succeded = 0;
 		}
 	}
-	// LABELS
 	return token->type;
 }
 
