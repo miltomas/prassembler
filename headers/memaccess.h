@@ -3,6 +3,6 @@
 
 #include "assembler.h"
 
-int mem_try_parse(char *str, MemAccess **target);
+int mem_try_parse(char *str, MemAccess **target, char **saveptr);
 
 #endif

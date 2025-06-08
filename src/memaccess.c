@@ -1,30 +1,31 @@
 #include "assembler.h"
 #include "tokens.h"
+#include <string.h>
 #include <sys/types.h>
 
 // final value must not be 0 and every field may be included once
 enum mem_EState {
 	MEM_NONE = 0,
 	MEM_SI = 1 << 0,
-	MEM_REG = 1 << 1,
-	MEM_IMM = 1 << 2
+	MEM_BASE = 1 << 1,
+	MEM_DIS = 1 << 2
 };
 
 static int mem_transition_si(struct Token *token1, struct Token *token2,
 							 enum mem_EState _) {
-	if (token2->type == IMMEDIATE) {
+	if (token1->type != IMMEDIATE) {
 		struct Token *temp = token2;
 		token2 = token1;
 		token1 = temp;
 	}
 
-	int valid = token1->imm.size == BYTE;
-	for (int i = 0; i < 4; i++) {
-		if ((1 << i) == token1->imm.value8) {
-			valid &= 1;
-		}
+	int valid = token1->imm.size == BYTE &&
+		(token1->imm.value8 == 1 || token1->imm.value8 == 2 ||
+		token1->imm.value8 == 4 || token1->imm.value8 == 8);
+	if (!valid) {
+		PDIAGLINE(ERR, "scale must be 1 | 2 | 4 | 8 : got: %d", token1->column,
+			token1->imm.value8);
 	}
-
 	return valid;
 }
 
@@ -50,6 +51,7 @@ struct mem_StateNode {
 
 static struct mem_StateNode mem_node_immediate;
 static struct mem_StateNode mem_node_register;
+static struct mem_StateNode mem_node_label;
 
 static struct mem_StateNodeTransition mem_transition_si_immediate = {
 	.transition_check = mem_transition_si,
@@ -63,38 +65,64 @@ static struct mem_StateNodeTransition mem_transition_si_register = {
 
 static struct mem_StateNodeTransition mem_transition_default = {
 	.transition_check = NULL,
-	.node =
-	{
-		[REGISTER] = &mem_node_register,
+	.node = {[REGISTER] = &mem_node_register,
 		[IMMEDIATE] = &mem_node_immediate,
-	},
+		[LABEL] = &mem_node_label},
 	.transition_state = MEM_NONE};
 
 static struct mem_StateNode mem_node_immediate = {
 	.transitions = {&mem_transition_si_register, &mem_transition_default},
-	.state = MEM_IMM};
+	.state = MEM_DIS};
 
 static struct mem_StateNode mem_node_register = {
 	.transitions = {&mem_transition_si_immediate, &mem_transition_default},
-	.state = MEM_REG};
+	.state = MEM_BASE};
+
+static struct mem_StateNode mem_node_label = {
+	.transitions = {NULL, &mem_transition_default}, .state = MEM_DIS};
 
 //
 // states and transitions
 //
 
-int mem_try_parse(char *str, MemAccess **target, char *saveptr) {
+struct mem_ParserState {
+	union {
+		struct mem_StateNode *node;
+		struct mem_StateNodeTransition *transition;
+	};
+	u_int is_transitioning;
+	// validation bitmask
+	u_int state;
+};
+
+int mem_try_parse(char *str, MemAccess **target, char **saveptr) {
+	char *word = NULL;
 	int i = 0;
-	int c = 0;
+	char c = str[i++];
 
-	enum mem_EState state_node;
-	if (str[0] != '[') {
+	if (c != '[')
 		return 0;
-	}
 
-	while ((c = str[++i]) != '\0') {
-		/*
-	 * if label => mem_ParsingState.displacement = 1;
-	 * if register =>
-	 */
+	struct mem_ParserState state = {.is_transitioning = 1, .state = 0};
+	while (c != '\0') {
+		switch (c) {
+			case '\t':
+			case ' ':
+				c = str[i++];
+				continue;
+			default:
+				break;
+		}
+
+		word = str + i;
+		char *end = tkn_word_seek_end(word);
+		char end_char = *end;
+		*end = '\0';
+
+
+		i = str - end;
+		c = end_char;
 	}
+	*saveptr = str + i;
+	return 1;
 }

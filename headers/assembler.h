@@ -2,6 +2,7 @@
 #define NEJLEPSI_ASSEMBLER
 
 #include <stdint.h>
+#include <sys/types.h>
 
 #define WARN "\033[0;33mW\033[0m:"
 #define ERR "\033[0;31mE\033[0m:"
@@ -77,7 +78,7 @@ struct Label {
 };
 
 struct Token {
-	int column;
+	u_long column;
 	union {
 		struct Instruction *instr;
 		struct Immediate imm;

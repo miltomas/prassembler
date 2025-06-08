@@ -22,7 +22,7 @@ struct tkn_ParseResult {
 	char *parse_end;
 };
 
-static struct tkn_TokenParser {
+struct tkn_TokenParser {
 	u_int comment_declared : 1;
 	u_long column;
 } parser_state;
@@ -148,7 +148,7 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
 		if (word[0] == '[' || word[0] == ']') {
 			token->type = MEMACCESS;
 			results.succeded =
-				mem_try_parse(word, &token->mem /* plus save ptr */);
+				mem_try_parse(word, &token->mem, &saveptr);
 		} else {
 			tkn_parse_token(word, &results, token, tkn_add_label);
 		}
@@ -181,4 +181,21 @@ int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
 	free(cbuf);
 	g_tkn_line_num++;
 	return 0;
+}
+
+char *tkn_word_seek_end(char *word) {
+	int i = 0;
+	char c = 0;
+
+	while ((c = word[i++]) != '\0') {
+		switch (c) {
+		case '\t':
+		case ' ':
+		case ']':
+		case '*':
+		case '+':
+			break;
+		}
+	}
+	return word + i - 1;
 }

@@ -23,6 +23,7 @@ extern char *g_tkn_last_line;
 
 // free last line before calling again!
 extern int tkn_parse_line(FILE *file, struct Token *(*tkn_buf)[TKN_LINE_MAX]);
+extern char *tkn_word_seek_end(char *word);
 extern int g_tkn_label_buf_i;
 extern struct Label *g_tkn_label_buf;
 
