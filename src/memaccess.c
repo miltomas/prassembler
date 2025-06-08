@@ -103,7 +103,9 @@ int mem_try_parse(char *str, MemAccess **target, char **saveptr) {
 	if (c != '[')
 		return 0;
 
-	struct mem_ParserState state = {.is_transitioning = 1, .state = 0};
+	struct mem_ParserState state = {
+		.transition = &mem_transition_default, .is_transitioning = 1, .state = 0};
+
 	while (c != '\0') {
 		switch (c) {
 			case '\t':
@@ -114,11 +116,12 @@ int mem_try_parse(char *str, MemAccess **target, char **saveptr) {
 				break;
 		}
 
+		if (c == '*' || c == '+') {
+		}
 		word = str + i;
 		char *end = tkn_word_seek_end(word);
 		char end_char = *end;
 		*end = '\0';
-
 
 		i = str - end;
 		c = end_char;
