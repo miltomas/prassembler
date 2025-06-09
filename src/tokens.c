@@ -12,40 +12,28 @@
 
 int g_tkn_error;
 
-struct tkn_TokenParser {
-	FILE *file;
-	const char *line;
-	u_long line_num;
-	u_long column;
-	int comment_declared;
-
-	int label_buf_n;
-	int label_buf_i;
-	struct Label *label_buf;
-};
-
 static const char *const g_tkn_conflict_map[] = {
 	[INSTRUCTION] = "INSTRUCTION", [IMMEDIATE] = "IMMEDIATE",
-	[MEMACCESS] = "MEMACCESS",	   [REGISTER] = "REGISTER",
+	[MEMACCESS] = "MEMACCESS",     [REGISTER] = "REGISTER",
 	[PREFIX] = "PREFIX",
 };
 
 #define TKN_DECLARE_LABEL_CONFLICT(type)                                       \
-	type == LABEL ? "Empty label" : g_tkn_conflict_map[type]
+type == LABEL ? "Empty label" : g_tkn_conflict_map[type]
 
 void tkn_parser_label_add(struct tkn_TokenParser *state, struct Label label,
 						  struct tkn_ParseResult *results, ETokenType type) {
 
 	if (!results->succeded) {
 		PDIAGLINE(state, ERR, "Malformed label! : Conflict -> %s\n",
-				  TKN_DECLARE_LABEL_CONFLICT(type));
+			TKN_DECLARE_LABEL_CONFLICT(type));
 		g_tkn_error = 1;
 		return;
 	}
 	if (state->label_buf_i == state->label_buf_n) {
 		state->label_buf_n *= 2;
 		state->label_buf = reallocarray(state->label_buf, state->label_buf_n,
-										sizeof(struct Label));
+								  sizeof(struct Label));
 	}
 	state->label_buf[state->label_buf_i++] = label;
 }
@@ -135,14 +123,13 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 	if (!state->line)
 		return -1;
 
-	size_t word_arena_n = 64;
-	char *get_word_arena = malloc(word_arena_n);
+	struct tkn_Arena *word_arena = tkn_arena_create();
 
 	const char *word, *saveptr;
 	saveptr = state->line;
 
 	int tkn_i = 0;
-	while ((word = tkn_word_get(state, &saveptr, &word_arena_n, &get_word_arena)) != NULL) {
+	while ((word = tkn_word_get(state, &saveptr, word_arena)) != NULL) {
 
 		if (tkn_i == TKN_LINE_MAX) {
 			PERRLICO("Too many tokens!\n", state->line_num, (u_long)0);
@@ -177,7 +164,7 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 		tkn_i++;
 	}
 
-	free(get_word_arena);
+	tkn_arena_destroy(word_arena);
 	state->line_num++;
 	return 0;
 }
@@ -200,8 +187,25 @@ void tkn_parser_destroy(struct tkn_TokenParser *parser) {
 	free(parser);
 }
 
+struct tkn_Arena {
+	size_t n;
+	char *buf;
+};
+
+struct tkn_Arena *tkn_arena_create() {
+	struct tkn_Arena *arena = malloc(sizeof(struct tkn_Arena));
+	arena->n = 64;
+	arena->buf = malloc(arena->n);
+	return arena;
+}
+
+void tkn_arena_destroy(struct tkn_Arena *arena) {
+	free(arena->buf);
+	free(arena);
+}
+
 char *tkn_word_get(struct tkn_TokenParser *state, const char **str,
-				   size_t *arena_n, char **arena) {
+				   struct tkn_Arena *arena) {
 	while (isspace(**str)) {
 		(*str)++;
 	}
@@ -219,12 +223,12 @@ char *tkn_word_get(struct tkn_TokenParser *state, const char **str,
 			n++;
 	}
 
-	if (n >= *arena_n) {
-		*arena_n *= 2;
-		*arena = reallocarray(*arena, *arena_n, 1);
+	if (n >= arena->n) {
+		arena->n *= 2;
+		arena->buf = reallocarray(arena->buf, arena->n, 1);
 	}
 
-	char *word = memcpy(*arena, *str, n + 1);
+	char *word = memcpy(arena->buf, *str, n + 1);
 	word[n] = '\0';
 
 	state->column = *str - state->line;

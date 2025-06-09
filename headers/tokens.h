@@ -10,7 +10,18 @@
 // if set, output errors, exit
 extern int g_tkn_error;
 
-struct tkn_TokenParser;
+struct tkn_TokenParser {
+	FILE *file;
+	const char *line;
+	u_long line_num;
+	u_long column;
+	int comment_declared;
+
+	int label_buf_n;
+	int label_buf_i;
+	struct Label *label_buf;
+};
+
 extern struct tkn_TokenParser *tkn_parser_create(FILE *file);
 extern void tkn_parser_destroy(struct tkn_TokenParser *parser);
 
@@ -27,7 +38,11 @@ extern struct Label tkn_parser_label_get(struct tkn_TokenParser *state);
 extern int tkn_parser_line(struct tkn_TokenParser *state,
 						   struct Token *(*tkn_buf)[TKN_LINE_MAX]);
 
-char *tkn_word_get(struct tkn_TokenParser *state, const char **str, size_t *n, char **cbuf);
+struct tkn_Arena;
+struct tkn_Arena *tkn_arena_create();
+void tkn_arena_destroy(struct tkn_Arena *);
+
+char *tkn_word_get(struct tkn_TokenParser *state, const char **str, struct tkn_Arena *arena);
 
 struct tkn_ParseResult {
 	u_int comment_declared : 1;
