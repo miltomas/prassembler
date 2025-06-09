@@ -11,16 +11,20 @@ int main(int argc, char *argv[]) {
 	if (files_init(&file_in, &file_out, &opts) == EXIT_FAILURE)
 		return EXIT_FAILURE;
 
-	// parse line by line rather than this
-	// struct Token *tokens = malloc(256 * sizeof(struct Token));
-	// if (tkn_parse_file(file_in, &tokens) == EXIT_FAILURE)
-	//   return EXIT_FAILURE;
+	struct Token *buf[TKN_LINE_MAX];
+	for (int i = 0; i < TKN_LINE_MAX; ++i) {
+		buf[i] = malloc(TKN_LINE_MAX * sizeof(struct Token));
+	}
+	struct tkn_TokenParser *parser = tkn_parser_create(file_in);
+	while (tkn_parser_line(parser, &buf) != -1) {
+	}
+	tkn_parser_destroy(parser);
 
 	return EXIT_SUCCESS;
 }
 
 // local output file position counter
 uint fpos;
-Instruction **traverse_file(void) {
+struct Instruction **traverse_file(void) {
 		
 }

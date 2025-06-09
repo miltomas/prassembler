@@ -23,8 +23,8 @@ static int mem_transition_si(struct Token *token1, struct Token *token2,
 		(token1->imm.value8 == 1 || token1->imm.value8 == 2 ||
 		token1->imm.value8 == 4 || token1->imm.value8 == 8);
 	if (!valid) {
-		PDIAGLINE(ERR, "scale must be 1 | 2 | 4 | 8 : got: %d", token1->column,
-			token1->imm.value8);
+		//PDIAGLINE(ERR, "scale must be 1 | 2 | 4 | 8 : got: %d", token1->column,
+		//	token1->imm.value8);
 	}
 	return valid;
 }
