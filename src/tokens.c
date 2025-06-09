@@ -14,8 +14,8 @@ int g_tkn_error;
 
 struct tkn_TokenParser {
 	FILE *file;
-	const char *last_line;
-	u_long line;
+	const char *line;
+	u_long line_num;
 	u_long column;
 	int comment_declared;
 
@@ -26,35 +26,35 @@ struct tkn_TokenParser {
 
 static const char *const g_tkn_conflict_map[] = {
 	[INSTRUCTION] = "INSTRUCTION", [IMMEDIATE] = "IMMEDIATE",
-	[MEMACCESS] = "MEMACCESS",     [REGISTER] = "REGISTER",
+	[MEMACCESS] = "MEMACCESS",	   [REGISTER] = "REGISTER",
 	[PREFIX] = "PREFIX",
 };
 
 #define TKN_DECLARE_LABEL_CONFLICT(type)                                       \
-type == LABEL ? "Empty label" : g_tkn_conflict_map[type]
+	type == LABEL ? "Empty label" : g_tkn_conflict_map[type]
 
 void tkn_parser_label_add(struct tkn_TokenParser *state, struct Label label,
 						  struct tkn_ParseResult *results, ETokenType type) {
 
 	if (!results->succeded) {
 		PDIAGLINE(state, ERR, "Malformed label! : Conflict -> %s\n",
-			TKN_DECLARE_LABEL_CONFLICT(type));
+				  TKN_DECLARE_LABEL_CONFLICT(type));
 		g_tkn_error = 1;
 		return;
 	}
 	if (state->label_buf_i == state->label_buf_n) {
 		state->label_buf_n *= 2;
 		state->label_buf = reallocarray(state->label_buf, state->label_buf_n,
-								  sizeof(struct Label));
+										sizeof(struct Label));
 	}
 	state->label_buf[state->label_buf_i++] = label;
 }
 
 void tkn_parser_line_clear(struct tkn_TokenParser *state) {
-	if (state->last_line) {
-		free((void *)state->last_line);
+	if (state->line) {
+		free((void *)state->line);
 	}
-	state->last_line = NULL;
+	state->line = NULL;
 	state->comment_declared = 0;
 	for (int i = 0; i < state->label_buf_i; i++) {
 		free(state->label_buf[i].value);
@@ -67,7 +67,7 @@ typedef void (*tkn_LabelCallback)(struct tkn_TokenParser *state, struct Label,
 
 // parse basic token types (non memaccess, that could be spread out)
 ETokenType tkn_parse_token(struct tkn_TokenParser *state,
-						   char *restrict const word,
+						   const char *restrict const word,
 						   struct tkn_ParseResult *result, struct Token *token,
 						   tkn_LabelCallback lcallback) {
 
@@ -75,15 +75,12 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 
 	char *const comment = strchr(word, ';');
 	if (comment) {
-		*comment = '\0';
 		result->comment_declared = 1;
 	}
 
 	char *const colon = strchr(word, ':');
 	if (colon) {
-		*colon = '\0';
 		result->label_declared = 1;
-		result->parse_end = colon;
 	}
 
 	if (isdigit(word[0])) {
@@ -119,13 +116,13 @@ char *tkn_parser_getline(struct tkn_TokenParser *state, size_t *n) {
 	if (len == -1)
 		return NULL;
 	if ((u_long)len != strlen(cbuf)) {
-		PERRLICO("Null byte detected!\n", state->line, len);
+		PERRLICO("Null byte detected!\n", state->line_num, len);
 		return NULL;
 	}
 	// no newline
 	cbuf[len - 1] = '\0';
 
-	state->last_line = strdup(cbuf);
+	state->line = cbuf;
 	return cbuf;
 }
 
@@ -134,28 +131,31 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 	tkn_parser_line_clear(state);
 
 	size_t n = 128;
-	char *cbuf = tkn_parser_getline(state, &n);
-	if (!cbuf)
+	tkn_parser_getline(state, &n);
+	if (!state->line)
 		return -1;
 
-	char *word, *saveptr;
-	word = strtok_r(cbuf, " \t,", &saveptr);
+	size_t word_arena_n = 64;
+	char *get_word_arena = malloc(word_arena_n);
+
+	const char *word, *saveptr;
+	saveptr = state->line;
 
 	int tkn_i = 0;
-	while (word != NULL) {
+	while ((word = tkn_word_get(state, &saveptr, &word_arena_n, &get_word_arena)) != NULL) {
+
 		if (tkn_i == TKN_LINE_MAX) {
-			PERRLICO("Too many tokens!\n", state->line, (u_long)0);
+			PERRLICO("Too many tokens!\n", state->line_num, (u_long)0);
 			g_tkn_error = 1;
 			break;
 		}
 
 		struct Token *token = (*tkn_buf)[tkn_i];
-		state->column = word - cbuf;
 
 		struct tkn_ParseResult results = {0};
 		if (word[0] == '[' || word[0] == ']') {
 			token->type = MEMACCESS;
-			results.succeded = mem_try_parse(word, &token->mem, &saveptr);
+			results.succeded = mem_try_parse(state, &token->mem);
 		} else {
 			tkn_parse_token(state, word, &results, token, tkn_parser_label_add);
 		}
@@ -174,18 +174,11 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 			g_tkn_error = 1;
 		}
 
-		if (results.label_declared) {
-			word = *(results.parse_end + 1) == '\0' ? strtok_r(NULL, " \t", &saveptr)
-				: results.parse_end + 1;
-			continue;
-		}
-
 		tkn_i++;
-		word = strtok_r(NULL, " \t,", &saveptr);
 	}
 
-	free(cbuf);
-	state->line++;
+	free(get_word_arena);
+	state->line_num++;
 	return 0;
 }
 
@@ -202,22 +195,39 @@ struct tkn_TokenParser *tkn_parser_create(FILE *file) {
 }
 
 void tkn_parser_destroy(struct tkn_TokenParser *parser) {
-	free((void *)parser->last_line);
+	free((void *)parser->line);
 	free(parser->label_buf);
 	free(parser);
 }
 
-char *tkn_word_get(struct tkn_TokenParser *state, char **str) {
-	while (isspace(*str)) {
-		str++;
+char *tkn_word_get(struct tkn_TokenParser *state, const char **str,
+				   size_t *arena_n, char **arena) {
+	while (isspace(**str)) {
+		(*str)++;
 	}
 	if (**str == '\0')
 		return NULL;
 
-	int n = strcspn(*str, " \t]*+");
-	char *word = *str;
+	char *special_chars = "*+!$,;[]";
 
-	state->column = word - state->last_line;
-	*str = word + n;
+	size_t n;
+	if (strchr(special_chars, **str)) {
+		n = 1;
+	} else {
+		n = strcspn(*str, " \r\t]:*+!$,;]");
+		if ((*str)[n] == ':')
+			n++;
+	}
+
+	if (n >= *arena_n) {
+		*arena_n *= 2;
+		*arena = reallocarray(*arena, *arena_n, 1);
+	}
+
+	char *word = memcpy(*arena, *str, n + 1);
+	word[n] = '\0';
+
+	state->column = *str - state->line;
+	*str = *str + n;
 	return word;
 }

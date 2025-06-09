@@ -14,7 +14,7 @@ static uint8_t g_mnemonics[][MAX_MNEMONIC_SIZE] = {
     "movzx",
 };
 
-int instr_try_parse(char *str, struct Instruction **target) {
+int instr_try_parse(const char *str, struct Instruction **target) {
 	// potrebuju implementovat hash table :[ to bude nejlepsi
 	return 1;
 }

@@ -3,6 +3,6 @@
 
 #include "assembler.h"
 
-int reg_try_parse(char *str, struct Register *target);
+int reg_try_parse(const char *str, struct Register *target);
 
 #endif
