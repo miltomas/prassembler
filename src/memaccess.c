@@ -95,36 +95,14 @@ struct mem_ParserState {
 	u_int state;
 };
 
-int mem_try_parse(char *str, MemAccess **target, char **saveptr) {
-	char *word = NULL;
-	int i = 0;
-	char c = str[i++];
 
-	if (c != '[')
-		return 0;
+int mem_try_parse(char *str, MemAccess **target, char **saveptr) {
 
 	struct mem_ParserState state = {
 		.transition = &mem_transition_default, .is_transitioning = 1, .state = 0};
 
 	while (c != '\0') {
-		switch (c) {
-			case '\t':
-			case ' ':
-				c = str[i++];
-				continue;
-			default:
-				break;
-		}
 
-		if (c == '*' || c == '+') {
-		}
-		word = str + i;
-		char *end = tkn_word_seek_end(word);
-		char end_char = *end;
-		*end = '\0';
-
-		i = str - end;
-		c = end_char;
 	}
 	*saveptr = str + i;
 	return 1;

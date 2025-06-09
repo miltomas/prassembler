@@ -12,13 +12,6 @@
 
 int g_tkn_error;
 
-struct tkn_ParseResult {
-	u_int comment_declared : 1;
-	u_int label_declared : 1;
-	u_int succeded : 1;
-	char *parse_end;
-};
-
 struct tkn_TokenParser {
 	FILE *file;
 	const char *last_line;
@@ -214,17 +207,17 @@ void tkn_parser_destroy(struct tkn_TokenParser *parser) {
 	free(parser);
 }
 
-char *tkn_word_seek_end(char *word) {
-	while (*word != '\0') {
-		switch (*word) {
-			case '\t':
-			case ' ':
-			case ']':
-			case '*':
-			case '+':
-				return word;
-		}
-		word++;
+char *tkn_word_get(struct tkn_TokenParser *state, char **str) {
+	while (isspace(*str)) {
+		str++;
 	}
+	if (**str == '\0')
+		return NULL;
+
+	int n = strcspn(*str, " \t]*+");
+	char *word = *str;
+
+	state->column = word - state->last_line;
+	*str = word + n;
 	return word;
 }
