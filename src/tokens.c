@@ -64,15 +64,13 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 
 	result->succeded = 1;
 
+	if (*word == ';') {
+		result->comment_declared = 1;
+	}
 	if (strchr(TKN_OPERATOR_CHARS, *word)) {
 		return TKN_OPERATOR;
 	}
-
-	char *const comment = strchr(word, ';');
-	if (comment) {
-		result->comment_declared = 1;
-	}
-
+	
 	char *const colon = strchr(word, ':');
 	if (colon) {
 		result->label_declared = 1;
@@ -156,16 +154,16 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 								   tkn_parser_label_add);
 		}
 
-		if (type == TKN_OPERATOR && *word != ',') {
-			PDIAGLINE(state, ERR, "Unexpected operator");
-			g_tkn_error = 1;
-			continue;
-		}
-
 		if (results.comment_declared)
 			state->comment_declared = 1;
 		if (state->comment_declared)
 			break;
+
+		if (type == TKN_OPERATOR && *word != ',') {
+			PDIAGLINE(state, ERR, "Unexpected operator\n");
+			g_tkn_error = 1;
+			continue;
+		}
 
 		if (token->type == TKN_IMMEDIATE && !results.succeded) {
 			PDIAGLINE(state, ERR, "Malformed immediate!\n");

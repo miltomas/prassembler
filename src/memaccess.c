@@ -97,6 +97,7 @@ struct mem_ParserState {
 };
 
 int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
+	/*
 
 	struct tkn_Arena *arena = tkn_arena_create();
 	struct mem_ParserState mem_state = {.transition = &mem_transition_default,
@@ -108,10 +109,9 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 	const char *saveptr = parser_state->line + parser_state->column;
 	struct Token *tkns[2] = {malloc(sizeof(struct Token *)),
 							 malloc(sizeof(struct Token *))};
-	mem_EState states[2] = {0};
-
-	char *word = tkn_word_get(parser_state, &saveptr, arena);
-	while (word != NULL) {
+	mem_EState states[2] = {MEM_NONE, MEM_NONE};
+	char *word;
+	while ((word = tkn_word_get(parser_state, &saveptr, arena)) != NULL) {
 		if (*word == ']' || !transition_valid) {
 			closed = 1;
 			break;
@@ -140,4 +140,5 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 
 	tkn_arena_destroy(arena);
 	return 1;
+	*/
 }
