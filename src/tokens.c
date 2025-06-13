@@ -12,28 +12,31 @@
 
 int g_tkn_error;
 
+#define TKN_OPERATOR_CHARS "*+!$,;[]"
+#define TKN_DELIMITER_CHARS " \r\t]:"
+
 static const char *const g_tkn_conflict_map[] = {
-	[INSTRUCTION] = "INSTRUCTION", [IMMEDIATE] = "IMMEDIATE",
-	[MEMACCESS] = "MEMACCESS",     [REGISTER] = "REGISTER",
-	[PREFIX] = "PREFIX",
+	[TKN_INSTRUCTION] = "INSTRUCTION", [TKN_IMMEDIATE] = "IMMEDIATE",
+	[TKN_MEMACCESS] = "MEMACCESS",	   [TKN_REGISTER] = "REGISTER",
+	[TKN_PREFIX] = "PREFIX",
 };
 
 #define TKN_DECLARE_LABEL_CONFLICT(type)                                       \
-type == LABEL ? "Empty label" : g_tkn_conflict_map[type]
+	type == TKN_LABEL ? "Empty label" : g_tkn_conflict_map[type]
 
 void tkn_parser_label_add(struct tkn_TokenParser *state, struct Label label,
 						  struct tkn_ParseResult *results, ETokenType type) {
 
 	if (!results->succeded) {
 		PDIAGLINE(state, ERR, "Malformed label! : Conflict -> %s\n",
-			TKN_DECLARE_LABEL_CONFLICT(type));
+				  TKN_DECLARE_LABEL_CONFLICT(type));
 		g_tkn_error = 1;
 		return;
 	}
 	if (state->label_buf_i == state->label_buf_n) {
 		state->label_buf_n *= 2;
 		state->label_buf = reallocarray(state->label_buf, state->label_buf_n,
-								  sizeof(struct Label));
+										sizeof(struct Label));
 	}
 	state->label_buf[state->label_buf_i++] = label;
 }
@@ -61,6 +64,10 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 
 	result->succeded = 1;
 
+	if (strchr(TKN_OPERATOR_CHARS, *word)) {
+		return TKN_OPERATOR;
+	}
+
 	char *const comment = strchr(word, ';');
 	if (comment) {
 		result->comment_declared = 1;
@@ -72,24 +79,24 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 	}
 
 	if (isdigit(word[0])) {
-		token->type = IMMEDIATE;
+		token->type = TKN_IMMEDIATE;
 		if (!imm_try_parse(word, &token->imm)) {
 			result->succeded = 0;
 		}
 	} else if (reg_try_parse(word, &token->reg)) {
-		token->type = REGISTER;
+		token->type = TKN_REGISTER;
 	} else if (prefix_try_parse(word, &token->prefix)) {
-		token->type = PREFIX;
+		token->type = TKN_PREFIX;
 	} else if (instr_try_parse(word, &token->instr)) {
-		token->type = INSTRUCTION;
+		token->type = TKN_INSTRUCTION;
 	} else {
-		token->type = LABEL;
+		token->type = TKN_LABEL;
 		// FREE!!
 		token->label = (struct Label){strdup(word)};
 	}
 
 	if (result->label_declared) {
-		if (token->type != LABEL || colon == word) {
+		if (token->type != TKN_LABEL || colon == word) {
 			result->succeded = 0;
 		}
 		lcallback(state, token->label, result, token->type);
@@ -140,23 +147,31 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 		struct Token *token = (*tkn_buf)[tkn_i];
 
 		struct tkn_ParseResult results = {0};
+		ETokenType type;
 		if (word[0] == '[' || word[0] == ']') {
-			token->type = MEMACCESS;
+			type = token->type = TKN_MEMACCESS;
 			results.succeded = mem_try_parse(state, &token->mem);
 		} else {
-			tkn_parse_token(state, word, &results, token, tkn_parser_label_add);
+			type = tkn_parse_token(state, word, &results, token,
+								   tkn_parser_label_add);
+		}
+
+		if (type == TKN_OPERATOR && *word != ',') {
+			PDIAGLINE(state, ERR, "Unexpected operator");
+			g_tkn_error = 1;
+			continue;
 		}
 
 		if (results.comment_declared)
 			state->comment_declared = 1;
 		if (state->comment_declared)
-			saveptr = "\0";
+			break;
 
-		if (token->type == IMMEDIATE && !results.succeded) {
+		if (token->type == TKN_IMMEDIATE && !results.succeded) {
 			PDIAGLINE(state, ERR, "Malformed immediate!\n");
 			g_tkn_error = 1;
 		}
-		if (token->type == MEMACCESS && !results.succeded) {
+		if (token->type == TKN_MEMACCESS && !results.succeded) {
 			PDIAGLINE(state, ERR, "Malformed memaccess!\n");
 			g_tkn_error = 1;
 		}
@@ -212,13 +227,11 @@ char *tkn_word_get(struct tkn_TokenParser *state, const char **str,
 	if (**str == '\0')
 		return NULL;
 
-	char *special_chars = "*+!$,;[]";
-
 	size_t n;
-	if (strchr(special_chars, **str)) {
+	if (strchr(TKN_OPERATOR_CHARS, **str)) {
 		n = 1;
 	} else {
-		n = strcspn(*str, " \r\t]:*+!$,;]");
+		n = strcspn(*str, TKN_OPERATOR_CHARS TKN_DELIMITER_CHARS);
 		if ((*str)[n] == ':')
 			n++;
 	}

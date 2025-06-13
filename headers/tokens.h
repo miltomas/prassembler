@@ -22,10 +22,18 @@ struct tkn_TokenParser {
 	struct Label *label_buf;
 };
 
+struct tkn_ParseResult {
+	u_int comment_declared : 1;
+	u_int label_declared : 1;
+	u_int succeded : 1;
+};
+
 extern struct tkn_TokenParser *tkn_parser_create(FILE *file);
 extern void tkn_parser_destroy(struct tkn_TokenParser *parser);
 
 extern struct Label tkn_parser_label_get(struct tkn_TokenParser *state);
+void tkn_parser_label_add(struct tkn_TokenParser *state, struct Label label,
+						  struct tkn_ParseResult *results, ETokenType type);
 
 #define PDIAGLINE(state, diagnostic, message, ...)                             \
 	fprintf(stderr,                                                            \
@@ -43,12 +51,6 @@ struct tkn_Arena *tkn_arena_create();
 void tkn_arena_destroy(struct tkn_Arena *);
 
 char *tkn_word_get(struct tkn_TokenParser *state, const char **str, struct tkn_Arena *arena);
-
-struct tkn_ParseResult {
-	u_int comment_declared : 1;
-	u_int label_declared : 1;
-	u_int succeded : 1;
-};
 
 typedef void (*tkn_LabelCallback)(struct tkn_TokenParser *state, struct Label,
 								  struct tkn_ParseResult *, ETokenType);
