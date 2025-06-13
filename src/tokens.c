@@ -159,6 +159,15 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 								   tkn_parser_label_add);
 		}
 
+		if (token->type == TKN_IMMEDIATE && !results.succeded) {
+			PDIAGLINE(state, ERR, "Malformed immediate!\n");
+			g_tkn_error = 1;
+		}
+		if (token->type == TKN_MEMACCESS && !results.succeded) {
+			PDIAGLINE(state, ERR, "Malformed memaccess!\n");
+			g_tkn_error = 1;
+		}
+
 		if (results.comment_declared)
 			state->comment_declared = 1;
 		if (state->comment_declared)
@@ -168,15 +177,6 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 			PDIAGLINE(state, ERR, "Unexpected operator\n");
 			g_tkn_error = 1;
 			continue;
-		}
-
-		if (token->type == TKN_IMMEDIATE && !results.succeded) {
-			PDIAGLINE(state, ERR, "Malformed immediate!\n");
-			g_tkn_error = 1;
-		}
-		if (token->type == TKN_MEMACCESS && !results.succeded) {
-			PDIAGLINE(state, ERR, "Malformed memaccess!\n");
-			g_tkn_error = 1;
 		}
 
 		tkn_i++;

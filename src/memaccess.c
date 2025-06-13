@@ -130,6 +130,10 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 									tkn_parser_label_add) == TKN_OPERATOR;
 		if (results.label_declared)
 			continue;
+		if (results.comment_declared) {
+			parser_state->comment_declared = 1;
+			break;
+		}
 
 		transition_valid = 1;
 		if (mem_state.is_transitioning) {
