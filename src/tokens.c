@@ -147,6 +147,7 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 
 		struct tkn_ParseResult results = {0};
 		ETokenType type;
+
 		if (word[0] == '[' || word[0] == ']') {
 			type = token->type = TKN_MEMACCESS;
 			int old_col = state->column;

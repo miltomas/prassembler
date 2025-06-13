@@ -117,7 +117,7 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 	if (*word != '[')
 		return 0;
 	while ((word = tkn_word_get(parser_state, &saveptr, arena)) != NULL) {
-
+		
 		if (*word == ']') {
 			closed = 1;
 			break;
@@ -128,6 +128,8 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 		struct tkn_ParseResult results = {0};
 		int is_op = tkn_parse_token(parser_state, word, &results, tkn,
 									tkn_parser_label_add) == TKN_OPERATOR;
+		if (results.label_declared)
+			continue;
 
 		transition_valid = 1;
 		if (mem_state.is_transitioning) {
