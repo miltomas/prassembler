@@ -33,7 +33,7 @@ typedef enum {
 
 typedef enum { BYTE = 1, WORD = 2, DWORD = 4, QWORD = 8 } ESize;
 
-#define ETOKEN_TYPE_COUNT 6
+#define ETOKEN_TYPE_COUNT 7
 typedef enum {
 	TKN_INSTRUCTION,
 	TKN_IMMEDIATE,

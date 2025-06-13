@@ -99,6 +99,7 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 		}
 		lcallback(state, token->label, result, token->type);
 	}
+
 	return token->type;
 }
 
@@ -148,7 +149,10 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 		ETokenType type;
 		if (word[0] == '[' || word[0] == ']') {
 			type = token->type = TKN_MEMACCESS;
+			int old_col = state->column;
 			results.succeded = mem_try_parse(state, &token->mem);
+			saveptr += state->column - old_col;
+			
 		} else {
 			type = tkn_parse_token(state, word, &results, token,
 								   tkn_parser_label_add);
