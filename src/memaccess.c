@@ -105,19 +105,16 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 	char closed = 0;
 	char transition_valid = 1;
 	const char *saveptr = parser_state->line + parser_state->column;
-	struct Token *tkn_buf[2] = {malloc(sizeof(struct Token *)),
-								malloc(sizeof(struct Token *))};
 
-	int8_t tkn_map_states[4] = {0};
-	struct Token *tkn_map_tokens[4] = {0};
+	int8_t token_map_states[4] = {0};
+	struct Token *token_map_tokens[4] = {0};
 	int tkn_i = 0;
-
 
 	char *word = tkn_word_get(parser_state, &saveptr, arena);
 	if (*word != '[')
 		return 0;
 	while ((word = tkn_word_get(parser_state, &saveptr, arena)) != NULL) {
-		
+
 		if (*word == ']') {
 			closed = 1;
 			break;
@@ -148,7 +145,8 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 				if (tkn_i == 0)
 					return 0;
 				transition_valid = t->transition_check(
-					tkn_buf[tkn_i - 1], tkn_buf[tkn_i], t->transition_state);
+					token_map_tokens[tkn_i - 1], token_map_tokens[tkn_i],
+					t->transition_state);
 			}
 
 			mem_EState curr = mem_state.node->state;
@@ -157,7 +155,7 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 				return 0;
 			if (t->transition_state != MEM_NONE) {
 				curr = t->transition_state;
-				mem_EState last = tkn_map_states[tkn_i - 1];
+				mem_EState last = token_map_states[tkn_i - 1];
 				// restore last flag
 				mem_state.state &= ~last;
 			}
@@ -166,8 +164,8 @@ int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
 				return 0;
 			mem_state.state |= curr;
 
-			tkn_map_states[tkn_i] = curr;
-			tkn_map_tokens[tkn_i] = tkn;
+			token_map_states[tkn_i] = curr;
+			token_map_tokens[tkn_i] = tkn;
 
 			tkn_i++;
 		} else {
