@@ -96,97 +96,137 @@ struct mem_ParserState {
 	u_int state;
 };
 
-int mem_try_parse(struct tkn_TokenParser *parser_state, MemAccess **target) {
+struct mem_Tokens {
+	struct Token *tokens[4];
+	int8_t states[4];
+};
+
+struct mem_ParserResults {
+	char is_closed;
+	char is_error;
+	char is_op;
+	int tkn_i;
+	char *word;
+	struct Token *token;
+	struct mem_ParserState state;
+};
+
+int mem_transition_handle(struct mem_ParserResults *results,
+						  struct mem_Tokens *tokens) {
+	mem_StateNodeTransition *t = results->state.transition;
+
+	results->state.node = t->node[results->token->type];
+
+	if (!results->state.node)
+		return 1;
+
+	if (t->transition_check) {
+		if (results->tkn_i == 0)
+			return 1;
+		if (t->transition_check(tokens->tokens[results->tkn_i - 1],
+								tokens->tokens[results->tkn_i],
+								t->transition_state))
+			return 1;
+	}
+
+	mem_EState curr = results->state.node->state;
+
+	if (t->transition_state != MEM_NONE && results->tkn_i == 0)
+		return 1;
+	if (t->transition_state != MEM_NONE) {
+		curr = t->transition_state;
+		mem_EState last = tokens->states[results->tkn_i - 1];
+		// restore last flag
+		results->state.state &= ~last;
+	}
+	// duplicate
+	if (results->state.state & curr)
+		return 1;
+	results->state.state |= curr;
+
+	tokens->tokens[results->tkn_i] = results->token;
+	tokens->states[results->tkn_i] = curr;
+
+	results->tkn_i++;
+	return 0;
+}
+
+int mem_node_handle(struct mem_ParserResults *results) {
+	// free unused token 
+	free(results->token);
+
+	if (!results->is_op)
+		return 1;
+	if (!strchr("*+", *results->word))
+		return 1;
+	results->state.transition =
+		results->state.node->transitions[*results->word - '*'];
+	if (!results->state.transition)
+		return 1;
+	return 0;
+}
+
+int mem_parser_tokens(struct tkn_TokenParser *state,
+					  struct mem_Tokens *tokens) {
 	struct tkn_Arena *arena = tkn_arena_create();
+
 	struct mem_ParserState mem_state = {.transition = &mem_transition_default,
 										.is_transitioning = 1,
 										.state = 0};
+	struct mem_ParserResults results = {.is_closed = 0,
+										.is_error = 0,
+										.is_op = 0,
+										.tkn_i = 0,
+										.word = NULL,
+										.token = NULL,
+										.state = mem_state};
 
-	char closed = 0;
-	char transition_valid = 1;
-	const char *saveptr = parser_state->line + parser_state->column;
+	const char *saveptr = state->line + state->column;
 
-	int8_t token_map_states[4] = {0};
-	struct Token *token_map_tokens[4] = {0};
-	int tkn_i = 0;
-
-	char *word = tkn_word_get(parser_state, &saveptr, arena);
-	if (*word != '[')
+	results.word = tkn_word_get(state, &saveptr, arena);
+	if (*results.word != '[')
 		return 0;
-	while ((word = tkn_word_get(parser_state, &saveptr, arena)) != NULL) {
+	while ((results.word = tkn_word_get(state, &saveptr, arena)) != NULL) {
 
-		if (*word == ']') {
-			closed = 1;
+		if (*results.word == ']') {
+			results.is_closed = 1;
 			break;
 		}
 
-		struct Token *tkn = calloc(1, sizeof(struct Token));
+		results.token = calloc(1, sizeof(struct Token));
 
-		struct tkn_ParseResult results = {0};
-		int is_op = tkn_parse_token(parser_state, word, &results, tkn,
-									tkn_parser_label_add) == TKN_OPERATOR;
-		if (results.label_declared)
+		struct tkn_ParseResult tkn_parse_results = {0};
+		results.is_op = tkn_parse_token(state, results.word, &tkn_parse_results,
+										results.token,
+										tkn_parser_label_add) == TKN_OPERATOR;
+
+		if (tkn_parse_results.label_declared)
 			continue;
-		if (results.comment_declared) {
-			parser_state->comment_declared = 1;
+		if (tkn_parse_results.comment_declared) {
+			state->comment_declared = 1;
 			break;
 		}
 
-		transition_valid = 1;
 		if (mem_state.is_transitioning) {
-			mem_StateNodeTransition *t = mem_state.transition;
-
-			mem_state.node = t->node[tkn->type];
-
-			if (!mem_state.node)
-				return 0;
-
-			if (t->transition_check) {
-				if (tkn_i == 0)
-					return 0;
-				transition_valid = t->transition_check(
-					token_map_tokens[tkn_i - 1], token_map_tokens[tkn_i],
-					t->transition_state);
-			}
-
-			mem_EState curr = mem_state.node->state;
-
-			if (t->transition_state != MEM_NONE && tkn_i == 0)
-				return 0;
-			if (t->transition_state != MEM_NONE) {
-				curr = t->transition_state;
-				mem_EState last = token_map_states[tkn_i - 1];
-				// restore last flag
-				mem_state.state &= ~last;
-			}
-			// duplicate
-			if (mem_state.state & curr)
-				return 0;
-			mem_state.state |= curr;
-
-			token_map_states[tkn_i] = curr;
-			token_map_tokens[tkn_i] = tkn;
-
-			tkn_i++;
+			results.is_error = mem_transition_handle(&results, tokens);
 		} else {
-			free(tkn);
-			if (!is_op)
-				return 0;
-			if (!strchr("*+", *word))
-				return 0;
-			mem_state.transition = mem_state.node->transitions[*word - '*'];
-			if (!mem_state.transition)
-				return 0;
+			results.is_error = mem_node_handle(&results);
 		}
 
-		if (!transition_valid)
+		if (results.is_error)
 			break;
-		if (results.comment_declared)
+		if (tkn_parse_results.comment_declared)
 			break;
 
 		mem_state.is_transitioning = !mem_state.is_transitioning;
 	}
 
 	tkn_arena_destroy(arena);
-	return mem_state.state && closed;
+	return results.state.state && results.is_closed;
+}
+int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target) {
+	struct mem_Tokens tokens = {0};
+	if (!mem_parser_tokens(state, &tokens))
+		return 0;
+	return 1;
 }
