@@ -137,20 +137,20 @@ int mem_transition_handle(struct mem_ParserResults *results,
 }
 
 int mem_flags_apply(struct mem_ParserResults *results, struct mem_Tokens *tokens, struct mem_StateNodeTransition *t) {
-	mem_EState curr = results->fsm.node->state;
 
+	mem_EState curr = results->fsm.node->state;
 	if (t && t->transition_state != MEM_NONE)
 		curr = t->transition_state;
-
-	tokens->states[results->tkn_i - 1] = curr;
 
 	if (results->last == MEM_SI && curr != MEM_SI) {
 		tokens->states[results->tkn_i - 1] = MEM_SI;
 	} else {
+		tokens->states[results->tkn_i - 1] = curr;
 		// duplicate
 		if (results->fsm.state & curr)
 			return 1;
 		results->fsm.state |= curr;
+
 	}
 	results->last = curr;
 
@@ -193,7 +193,7 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 
 	results.word = tkn_word_get(state, &saveptr, arena);
 	if (*results.word != '[')
-		return 0;
+		goto error;
 	while ((results.word = tkn_word_get(state, &saveptr, arena)) != NULL) {
 
 		if (*results.word == ']') {
@@ -228,13 +228,17 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 	}
 
 	if (results.fsm.is_transitioning || !results.fsm.node)
-		return 0;
+		goto error;
 
 	if (mem_flags_apply(&results, tokens, NULL))
-		return 0;
+		goto error;
 
 	tkn_arena_destroy(arena);
 	return results.fsm.state && results.is_closed;
+	
+error:
+	tkn_arena_destroy(arena);
+	return 0;
 }
 
 int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target) {
