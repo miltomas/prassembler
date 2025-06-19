@@ -1,5 +1,6 @@
 #include "assembler.h"
 #include "tokens.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -56,12 +57,12 @@ static mem_StateNode mem_node_label;
 
 static mem_StateNodeTransition mem_transition_si_immediate = {
 	.transition_check = mem_transition_si,
-	.node = {[TKN_REGISTER] = &mem_node_register},
+	.node = {[TKN_IMMEDIATE] = &mem_node_immediate},
 	.transition_state = MEM_SI};
 
 static mem_StateNodeTransition mem_transition_si_register = {
 	.transition_check = mem_transition_si,
-	.node = {[TKN_IMMEDIATE] = &mem_node_immediate},
+	.node = {[TKN_REGISTER] = &mem_node_register},
 	.transition_state = MEM_SI};
 
 static mem_StateNodeTransition mem_transition_default = {
@@ -107,6 +108,7 @@ struct mem_ParserResults {
 	char is_op;
 	int tkn_i;
 	char *word;
+	mem_EState last;
 	struct Token *token;
 	struct mem_ParserState fsm;
 };
@@ -119,41 +121,43 @@ int mem_transition_handle(struct mem_ParserResults *results,
 	results->fsm.node = t->node[results->token->type];
 	n = results->fsm.node;
 
+	tokens->tokens[results->tkn_i] = results->token;
+
 	if (!n)
 		return 1;
-
 	if (t->transition_check) {
-		if (results->tkn_i == 0)
-			return 1;
 		if (!t->transition_check(tokens->tokens[results->tkn_i - 1],
 								tokens->tokens[results->tkn_i],
 								t->transition_state))
 			return 1;
 	}
 
-	mem_EState curr = n->state;
-
-	if (t->transition_state != MEM_NONE && results->tkn_i == 0)
-		return 1;
-	if (t->transition_state != MEM_NONE) {
-		curr = t->transition_state;
-		mem_EState last = tokens->states[results->tkn_i - 1];
-		// restore last flag
-		results->fsm.state &= ~last;
-	}
-	// duplicate
-	if (results->fsm.state & curr)
-		return 1;
-	results->fsm.state |= curr;
-
-	tokens->tokens[results->tkn_i] = results->token;
-	tokens->states[results->tkn_i] = curr;
-
 	results->tkn_i++;
 	return 0;
 }
 
-int mem_node_handle(struct mem_ParserResults *results) {
+int mem_flags_apply(struct mem_ParserResults *results, struct mem_Tokens *tokens, struct mem_StateNodeTransition *t) {
+	mem_EState curr = results->fsm.node->state;
+
+	if (t && t->transition_state != MEM_NONE)
+		curr = t->transition_state;
+
+	tokens->states[results->tkn_i - 1] = curr;
+
+	if (results->last == MEM_SI) {
+		tokens->states[results->tkn_i - 1] = MEM_SI;
+	} else {
+		// duplicate
+		if (results->fsm.state & curr)
+			return 1;
+		results->fsm.state |= curr;
+	}
+	results->last = curr;
+
+	return 0;
+}
+
+int mem_node_handle(struct mem_ParserResults *results, struct mem_Tokens *tokens) {
 	// free unused token
 	free(results->token);
 
@@ -161,10 +165,12 @@ int mem_node_handle(struct mem_ParserResults *results) {
 		return 1;
 	if (!strchr("*+", *results->word))
 		return 1;
-	results->fsm.transition =
-		results->fsm.node->transitions[*results->word - '*'];
-	if (!results->fsm.transition)
+	mem_StateNodeTransition *t = results->fsm.node->transitions[*results->word - '*'];
+	if (!t)
 		return 1;
+	if (mem_flags_apply(results, tokens, t))
+		return 1;
+	results->fsm.transition = t;
 	return 0;
 }
 
@@ -212,19 +218,23 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 		if (results.fsm.is_transitioning) {
 			results.is_error = mem_transition_handle(&results, tokens);
 		} else {
-			results.is_error = mem_node_handle(&results);
+			results.is_error = mem_node_handle(&results, tokens);
 		}
 
 		if (results.is_error)
-			break;
-		if (tkn_parse_results.comment_declared)
 			break;
 
 		results.fsm.is_transitioning = !results.fsm.is_transitioning;
 	}
 
+	if (results.fsm.is_transitioning || !results.fsm.node)
+		return 0;
+
+	if (mem_flags_apply(&results, tokens, NULL))
+		return 0;
+
 	tkn_arena_destroy(arena);
-	return !results.fsm.is_transitioning && results.fsm.state && results.is_closed;
+	return results.fsm.state && results.is_closed;
 }
 
 int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target) {
