@@ -144,7 +144,7 @@ int mem_flags_apply(struct mem_ParserResults *results, struct mem_Tokens *tokens
 
 	tokens->states[results->tkn_i - 1] = curr;
 
-	if (results->last == MEM_SI) {
+	if (results->last == MEM_SI && curr != MEM_SI) {
 		tokens->states[results->tkn_i - 1] = MEM_SI;
 	} else {
 		// duplicate
