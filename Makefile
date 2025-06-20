@@ -22,8 +22,7 @@ $(BIN_DIR)/pras: $(ALL_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ $(CFLAGS) -o $@
 
-.PHONY: pras-debug
-pras-debug: $(ALL_OBJS)
+$(BIN_DIR)/pras-debug: $(ALL_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ $(CFLAGS) -o $@ -g
 
@@ -35,7 +34,7 @@ $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 $(BUILD_DIR)/%.gperf.c: $(SRC_DIR)/%.gperf
 	@mkdir -p $(dir $@)
 	@funcname=$(shell echo $* | sed 's/[^a-zA-Z0-9_]/_/g'); \
-	gperf -N lookup_$$funcname -L C $< > $@
+	gperf -a -N lookup_$$funcname -L ANSI-C -t $< > $@
 
 # Compile generated gperf C
 $(BUILD_DIR)/%.gperf.o: $(BUILD_DIR)/%.gperf.c

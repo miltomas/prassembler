@@ -1,0 +1,14 @@
+%{
+#include <string.h>
+#include "assembler.h"
+#include "instructions.h"
+%}
+
+struct GperfInstr {
+    const char *name;
+	const struct Instruction instr;
+};
+%%
+mov, {(struct InstrFuncs *)5}
+movzx, {(struct InstrFuncs *)5}
+add, {(struct InstrFuncs *)5}
