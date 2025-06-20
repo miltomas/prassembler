@@ -26,18 +26,19 @@ $(BIN_DIR)/pras-debug: $(ALL_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ $(CFLAGS) -o $@ -g
 
+
 $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $< $(CFLAGS) -o $@ -c
 
 # Generate C from gperf, handle subdirs
+# Generated lookup function named lookup_$(name of the file)
 $(BUILD_DIR)/%.gperf.c: $(SRC_DIR)/%.gperf
 	@mkdir -p $(dir $@)
 	@funcname=$(shell echo $* | sed 's/[^a-zA-Z0-9_]/_/g'); \
 	gperf -a -N lookup_$$funcname -L ANSI-C -t $< > $@
 
-# Compile generated gperf C
-$(BUILD_DIR)/%.gperf.o: $(BUILD_DIR)/%.gperf.c
+$(GPERF_OBJS): $(BUILD_DIR)/%.gperf.o: $(BUILD_DIR)/%.gperf.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
