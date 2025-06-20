@@ -76,7 +76,7 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 		result->label_declared = 1;
 	}
 
-	if (isdigit(word[0])) {
+	if (isdigit(word[0]) || word[0] == '-') {
 		token->type = TKN_IMMEDIATE;
 		if (!imm_try_parse(word, &token->imm)) {
 			result->succeded = 0;
