@@ -15,6 +15,11 @@ $(BIN_DIR)/pras: $(OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ $(CFLAGS) -o $@
 
+.PHONY: debug
+debug: $(OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(CC) $^ $(CFLAGS) -o $@ -g
+
 $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $< $(CFLAGS) -o $@ -c
