@@ -23,6 +23,7 @@ globální knihovny - glibc (stdlib.h, string.h..)
 4. **epilog**
 
 Předpokládám, že implementace bude vrcholný C experience => pouze standardní knihovna.
+*jo ale taky teda GNU gperf nakonec.*
 
 **další rešerše architektury potřeba**
 
