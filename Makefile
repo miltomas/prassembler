@@ -36,7 +36,7 @@ $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 $(BUILD_DIR)/%.gperf.c: $(SRC_DIR)/%.gperf
 	@mkdir -p $(dir $@)
 	@funcname=$(shell echo $* | sed 's/[^a-zA-Z0-9_]/_/g'); \
-	gperf -a -N lookup_$$funcname -L ANSI-C -t $< > $@
+	gperf --ignore-case -a -N lookup_$$funcname -L ANSI-C -t $< > $@
 
 $(GPERF_OBJS): $(BUILD_DIR)/%.gperf.o: $(BUILD_DIR)/%.gperf.c
 	@mkdir -p $(dir $@)
