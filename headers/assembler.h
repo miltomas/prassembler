@@ -13,22 +13,129 @@
 typedef enum { RAW, ELF } EOutFormat;
 
 typedef enum {
-	A,
-	C,
-	D,
-	B,
-	AH_SP,
-	CH_BP,
-	DH_SI,
-	BH_DI,
-	R8,
-	R9,
-	R10,
-	R11,
-	R12,
-	R13,
-	R14,
-	R15
+	S_REG_ES,
+	S_REG_CS,
+	S_REG_SS,
+	S_REG_DS,
+	S_REG_FS,
+	S_REG_GS
+} ESRegister;
+
+typedef enum {
+	x87_REG_ST0,
+	x87_REG_ST1,
+	x87_REG_ST2,
+	x87_REG_ST3,
+	x87_REG_ST4,
+	x87_REG_ST5,
+	x87_REG_ST6,
+	x87_REG_ST7
+} Ex87Register;
+
+typedef enum {
+	MMX_REG_MM0,
+	MMX_REG_MM1,
+	MMX_REG_MM2,
+	MMX_REG_MM3,
+	MMX_REG_MM4,
+	MMX_REG_MM5,
+	MMX_REG_MM6,
+	MMX_REG_MM7
+} EMMXRegister;
+
+typedef enum {
+	XMM_REG_XMM0,
+	XMM_REG_XMM1,
+	XMM_REG_XMM2,
+	XMM_REG_XMM3,
+	XMM_REG_XMM4,
+	XMM_REG_XMM5,
+	XMM_REG_XMM6,
+	XMM_REG_XMM7,
+	XMM_REG_XMM8,
+	XMM_REG_XMM9,
+	XMM_REG_XMM10,
+	XMM_REG_XMM11,
+	XMM_REG_XMM12,
+	XMM_REG_XMM13,
+	XMM_REG_XMM14,
+	XMM_REG_XMM15
+} EXMMRegister;
+
+typedef enum {
+	YMM_REG_YMM0,
+	YMM_REG_YMM1,
+	YMM_REG_YMM2,
+	YMM_REG_YMM3,
+	YMM_REG_YMM4,
+	YMM_REG_YMM5,
+	YMM_REG_YMM6,
+	YMM_REG_YMM7,
+	YMM_REG_YMM8,
+	YMM_REG_YMM9,
+	YMM_REG_YMM10,
+	YMM_REG_YMM11,
+	YMM_REG_YMM12,
+	YMM_REG_YMM13,
+	YMM_REG_YMM14,
+	YMM_REG_YMM15
+} EYMMRegister;
+
+typedef enum {
+	D_REG_DR0,
+	D_REG_DR1,
+	D_REG_DR2,
+	D_REG_DR3,
+	D_REG_DR4,
+	D_REG_DR5,
+	D_REG_DR6,
+	D_REG_DR7,
+	D_REG_DR8,
+	D_REG_DR9,
+	D_REG_DR10,
+	D_REG_DR11,
+	D_REG_DR12,
+	D_REG_DR13,
+	D_REG_DR14,
+	D_REG_DR15
+} EDRegister;
+
+typedef enum {
+	C_REG_CR0,
+	C_REG_CR1,
+	C_REG_CR2,
+	C_REG_CR3,
+	C_REG_CR4,
+	C_REG_CR5,
+	C_REG_CR6,
+	C_REG_CR7,
+	C_REG_CR8,
+	C_REG_CR9,
+	C_REG_CR10,
+	C_REG_CR11,
+	C_REG_CR12,
+	C_REG_CR13,
+	C_REG_CR14,
+	C_REG_CR15
+} ECRegister;
+
+typedef enum {
+	GP_REG_A,
+	GP_REG_C,
+	GP_REG_D,
+	GP_REG_B,
+	GP_REG_AH_SP,
+	GP_REG_CH_BP,
+	GP_REG_DH_SI,
+	GP_REG_BH_DI,
+	GP_REG_R8,
+	GP_REG_R9,
+	GP_REG_R10,
+	GP_REG_R11,
+	GP_REG_R12,
+	GP_REG_R13,
+	GP_REG_R14,
+	GP_REG_R15
 } EGPRegister;
 
 typedef enum { BYTE = 1, WORD = 2, DWORD = 4, QWORD = 8 } ESize;
@@ -74,6 +181,7 @@ typedef struct {
 
 struct Register {
 	ESize size;
+
 	EGPRegister type;
 };
 
