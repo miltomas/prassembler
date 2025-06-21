@@ -13,6 +13,17 @@
 typedef enum { RAW, ELF } EOutFormat;
 
 typedef enum {
+	REG_S,
+	REG_x87,
+	REG_MMX,
+	REG_XMM,
+	REG_YMM,
+	REG_D,
+	REG_C,
+	REG_GP
+} ERegisterType;
+
+typedef enum {
 	S_REG_ES,
 	S_REG_CS,
 	S_REG_SS,
@@ -181,8 +192,17 @@ typedef struct {
 
 struct Register {
 	ESize size;
-
-	EGPRegister type;
+	ERegisterType type;
+	union {
+		ESRegister segment_reg;
+		Ex87Register x87_reg;
+		EMMXRegister mmx_reg;
+		EXMMRegister xmm_reg;
+		EYMMRegister ymm_reg;
+		EDRegister debug_reg;
+		ECRegister control_reg;
+		EGPRegister gp_reg;
+	};
 };
 
 struct Prefix {};
@@ -205,6 +225,5 @@ struct Token {
 };
 
 struct Operand {};
-
 
 #endif
