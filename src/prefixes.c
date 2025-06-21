@@ -1,5 +1,4 @@
 #include "assembler.h"
-#include <stdio.h>
 #include <string.h>
 
 struct GperfPrefix {
@@ -15,7 +14,6 @@ int prefix_try_parse(const char *str, struct Prefix *target) {
 	if (!gperf)
 		return 0;
 	*target = gperf->prefix;
-	printf("%d\n", target->type);
 	return 1;
 }
 ;

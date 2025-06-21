@@ -249,6 +249,4 @@ struct Token {
 	int8_t type;
 };
 
-struct Operand {};
-
 #endif

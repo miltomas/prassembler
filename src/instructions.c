@@ -1,5 +1,4 @@
 #include "assembler.h"
-#include <stdint.h>
 #include <string.h>
 
 struct GperfInstr {

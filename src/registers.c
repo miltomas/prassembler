@@ -1,5 +1,4 @@
 #include "assembler.h"
-#include <stdio.h>
 #include <string.h>
 
 struct GperfReg {
