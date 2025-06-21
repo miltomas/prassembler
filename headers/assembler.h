@@ -44,9 +44,14 @@ typedef enum {
 	TKN_OPERATOR
 } ETokenType;
 
-struct InstrFuncs;
+struct Token;
+struct Instruction;
+struct InstrFuncs {
+	int (*validate)(int cnt, struct Token *tokens);
+	int16_t (*encode)(struct Instruction *instr);
+};
 struct Instruction {
-	struct InstrFuncs *funcs;
+	struct InstrFuncs funcs;
 };
 
 struct Immediate {
@@ -93,9 +98,5 @@ struct Token {
 
 struct Operand {};
 
-struct InstrFuncs {
-	int (*validate)(int cnt, struct Token tokens[cnt]);
-	int16_t (*encode)(struct Instruction *instr);
-};
 
 #endif

@@ -2,6 +2,7 @@
 #include <string.h>
 #include "assembler.h"
 #include "instructions.h"
+#include "definition/instruction_definitions.h"
 %}
 
 struct GperfInstr {
@@ -9,6 +10,4 @@ struct GperfInstr {
 	const struct Instruction instr;
 };
 %%
-mov, {(struct InstrFuncs *)5}
-movzx, {(struct InstrFuncs *)5}
-add, {(struct InstrFuncs *)5}
+mov, {{instr_mov_validate, instr_mov_encode}}
