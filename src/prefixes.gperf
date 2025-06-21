@@ -8,4 +8,19 @@ struct GperfPrefix {
 	const struct Prefix prefix;
 };
 %%
-repnz, {PRE_REPNE_REPNZ}
+lock, { .type = PRE_LOCK }
+repne, { .type = PRE_REPNE_REPNZ }
+repnz, { .type = PRE_REPNE_REPNZ }
+rep, { .type = PRE_REP_REPE_REPZ }
+repe, { .type = PRE_REP_REPE_REPZ }
+repz, { .type = PRE_REP_REPE_REPZ }
+cs, { .type = PRE_CS }
+ss, { .type = PRE_SS }
+ds, { .type = PRE_DS }
+es, { .type = PRE_ES }
+fs, { .type = PRE_FS }
+gs, { .type = PRE_GS }
+branch_taken, { .type = PRE_BRANCH_TAKEN }
+branch_not_taken,{ .type = PRE_BRANCH_NOT_TAKEN }
+operand, { .type = PRE_OPERAND }
+address, { .type = PRE_ADDRESS }
