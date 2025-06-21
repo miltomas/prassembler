@@ -6,7 +6,7 @@
 %}
 
 struct GperfInstr {
-    const char *name;
+	const char *name;
 	const struct Instruction instr;
 };
 %%
