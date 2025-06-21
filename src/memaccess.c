@@ -241,7 +241,7 @@ error:
 	return 0;
 }
 
-int mem_try_parse(struct tkn_TokenParser *state, MemAccess *target) {
+int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target) {
 	struct mem_Tokens tokens = {0};
 	if (!mem_parser_tokens(state, &tokens))
 		return 0;

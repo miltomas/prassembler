@@ -81,9 +81,9 @@ struct Label {
 struct Token {
 	u_long column;
 	union {
-		struct Instruction *instr;
-		struct Immediate imm;
 		MemAccess *mem;
+		struct Instruction instr;
+		struct Immediate imm;
 		struct Register reg;
 		struct Prefix prefix;
 		struct Label label;
