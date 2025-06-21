@@ -4,6 +4,6 @@
 #include "assembler.h"
 #include "tokens.h"
 
-int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target);
+int mem_try_parse(struct tkn_TokenParser *state, MemAccess *target);
 
 #endif
