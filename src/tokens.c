@@ -73,6 +73,7 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 	
 	char *const colon = strchr(word, ':');
 	if (colon) {
+		*colon = '\0';
 		result->label_declared = 1;
 	}
 
