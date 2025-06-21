@@ -1,0 +1,11 @@
+%{
+#include <string.h>
+#include "assembler.h"
+%}
+
+struct GperfReg {
+	const char *name;
+	const struct Register reg;
+};
+%%
+rax, { QWORD, REG_GP, { .gp_reg = GP_REG_A } }
