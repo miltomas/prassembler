@@ -205,7 +205,32 @@ struct Register {
 	};
 };
 
-struct Prefix {};
+// max 4 prefixes per instruction - more than 1 of a single group = undefined
+typedef enum {
+	// group 1
+	PRE_LOCK = 0xF0,
+	PRE_REPNE_REPNZ = 0xF2,
+	PRE_REP_REPE_REPZ = 0xF3,
+	// group 2
+	// segment overrides
+	PRE_CS = 0x2E,
+	PRE_SS = 0x36,
+	PRE_DS = 0x3E,
+	PRE_ES = 0x26,
+	PRE_FS = 0x64,
+	PRE_GS = 0x65,
+	// segment overrides
+	PRE_BRANCH_TAKEN = 0x2E,
+	PRE_BRANCH_NOT_TAKEN = 0x3E,
+	// group 3
+	PRE_OPERAND = 0x66,
+	// group 4
+	PRE_ADDRESS = 0x67
+} EPrefixType;
+
+struct Prefix {
+	EPrefixType type;
+};
 
 struct Label {
 	char *value;

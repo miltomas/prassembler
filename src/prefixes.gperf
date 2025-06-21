@@ -1,0 +1,11 @@
+%{
+#include <string.h>
+#include "assembler.h"
+%}
+
+struct GperfPrefix {
+	const char *name;
+	const struct Prefix prefix;
+};
+%%
+repnz, {PRE_REPNE_REPNZ}
