@@ -190,13 +190,6 @@ typedef enum {
 	SIZE_QWORD = 1 << 3,
 } EOptionalSize;
 
-typedef struct {
-	struct Register *base;
-	struct Register *si_reg;
-	struct Immediate *si_imm;
-	struct Immediate *displacement;
-	EOptionalSize size;
-} MemAccess;
 
 struct Register {
 	ESize size;
@@ -212,6 +205,17 @@ struct Register {
 		EGPRegister gp_reg;
 	};
 };
+
+typedef struct {
+	uint8_t is_base : 1;
+	uint8_t is_si : 1;
+	uint8_t is_displacement : 1;
+	struct Register base;
+	struct Register si_reg;
+	struct Immediate si_imm;
+	struct Immediate displacement;
+	EOptionalSize size;
+} MemAccess;
 
 // max 4 prefixes per instruction - more than 1 of a single group = undefined
 typedef enum {

@@ -97,9 +97,11 @@ struct mem_ParserState {
 	u_int state;
 };
 
+#define MEM_MAX_TOKENS 4
 struct mem_Tokens {
-	struct Token *tokens[4];
-	int8_t states[4];
+	// max 4 tokens - no duplicates ( 2 for scale/index )
+	struct Token *tokens[MEM_MAX_TOKENS];
+	int8_t states[MEM_MAX_TOKENS];
 };
 
 struct mem_ParserResults {
@@ -114,7 +116,7 @@ struct mem_ParserResults {
 };
 
 static inline int mem_transition_handle(struct mem_ParserResults *results,
-						  struct mem_Tokens *tokens) {
+										struct mem_Tokens *tokens) {
 	mem_StateNodeTransition *t = results->fsm.transition;
 	mem_StateNode *n = NULL;
 
@@ -127,8 +129,8 @@ static inline int mem_transition_handle(struct mem_ParserResults *results,
 		return 1;
 	if (t->transition_check) {
 		if (!t->transition_check(tokens->tokens[results->tkn_i - 1],
-								tokens->tokens[results->tkn_i],
-								t->transition_state))
+								 tokens->tokens[results->tkn_i],
+								 t->transition_state))
 			return 1;
 	}
 
@@ -136,7 +138,9 @@ static inline int mem_transition_handle(struct mem_ParserResults *results,
 	return 0;
 }
 
-int mem_flags_apply(struct mem_ParserResults *results, struct mem_Tokens *tokens, struct mem_StateNodeTransition *t) {
+int mem_flags_apply(struct mem_ParserResults *results,
+					struct mem_Tokens *tokens,
+					struct mem_StateNodeTransition *t) {
 
 	mem_EState curr = results->fsm.node->state;
 	if (t && t->transition_state != MEM_NONE)
@@ -150,14 +154,14 @@ int mem_flags_apply(struct mem_ParserResults *results, struct mem_Tokens *tokens
 		if (results->fsm.state & curr)
 			return 1;
 		results->fsm.state |= curr;
-
 	}
 	results->last = curr;
 
 	return 0;
 }
 
-static inline int mem_node_handle(struct mem_ParserResults *results, struct mem_Tokens *tokens) {
+static inline int mem_node_handle(struct mem_ParserResults *results,
+								  struct mem_Tokens *tokens) {
 	// free unused token
 	free(results->token);
 
@@ -165,7 +169,8 @@ static inline int mem_node_handle(struct mem_ParserResults *results, struct mem_
 		return 1;
 	if (!strchr("*+", *results->word))
 		return 1;
-	mem_StateNodeTransition *t = results->fsm.node->transitions[*results->word - '*'];
+	mem_StateNodeTransition *t =
+		results->fsm.node->transitions[*results->word - '*'];
 	if (!t)
 		return 1;
 	if (mem_flags_apply(results, tokens, t))
@@ -174,8 +179,7 @@ static inline int mem_node_handle(struct mem_ParserResults *results, struct mem_
 	return 0;
 }
 
-int mem_parser_tokens(struct tkn_TokenParser *state,
-					  struct mem_Tokens *tokens,
+int mem_parser_tokens(struct tkn_TokenParser *state, struct mem_Tokens *tokens,
 					  EOptionalSize size) {
 	struct tkn_Arena *arena = tkn_arena_create();
 
@@ -225,7 +229,8 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 			break;
 		}
 
-		if (results.token->type == TKN_IMMEDIATE && !tkn_parse_results.succeded) {
+		if (results.token->type == TKN_IMMEDIATE &&
+			!tkn_parse_results.succeded) {
 			PDIAGLINE(state, ERR, "Malformed immediate!\n");
 			g_tkn_error = 1;
 		}
@@ -250,15 +255,42 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 
 	tkn_arena_destroy(arena);
 	return results.fsm.state && results.is_closed;
-	
+
 error:
 	tkn_arena_destroy(arena);
 	return 0;
 }
 
-int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target, EOptionalSize size) {
+int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target,
+				  EOptionalSize size) {
 	struct mem_Tokens tokens = {0};
 	if (!mem_parser_tokens(state, &tokens, size))
 		return 0;
+
+	*target = calloc(1, sizeof(MemAccess));
+
+	for (int i = 0; i < MEM_MAX_TOKENS; i++) {
+		struct Token *token = tokens.tokens[i];
+
+		if (!token)
+			break;
+
+		ETokenType tkn_type = tokens.tokens[i]->type;
+		mem_EState mem_type = tokens.states[i];
+
+		if (mem_type == MEM_SI && tkn_type == TKN_REGISTER) {
+			(*target)->is_si = 1;
+			(*target)->si_reg = token->reg;
+		} else if (mem_type == MEM_SI && tkn_type == TKN_IMMEDIATE) {
+			(*target)->is_si = 1;
+			(*target)->si_imm = token->imm;
+		} else if (mem_type == MEM_BASE) {
+			(*target)->base = token->reg;
+		} else {
+			(*target)->displacement = token->imm;
+		}
+		free(token);
+	}
+	
 	return 1;
 }
