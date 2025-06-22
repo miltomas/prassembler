@@ -215,9 +215,12 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 										results.token,
 										tkn_parser_label_add) == TKN_OPERATOR;
 
-		if (tkn_parse_results.label_declared)
+		if (tkn_parse_results.label_declared) {
+			free(results.token);
 			continue;
+		}
 		if (tkn_parse_results.comment_declared) {
+			free(results.token);
 			state->comment_declared = 1;
 			break;
 		}
