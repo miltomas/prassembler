@@ -186,7 +186,6 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 			int old_col = state->column;
 			results.succeded = mem_try_parse(state, &token->mem, mem_size);
 			saveptr += state->column - old_col;
-			
 		} else {
 			type = tkn_parse_token(state, word, &results, token,
 								   tkn_parser_label_add);
@@ -206,12 +205,13 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 		if (state->comment_declared)
 			break;
 
-		if (type == TKN_OPERATOR && *word != ',') {
+		if (*word == ',')
+			continue;
+		if (type == TKN_OPERATOR) {
 			PDIAGLINE(state, ERR, "Unexpected operator\n");
 			g_tkn_error = 1;
 			continue;
 		}
-
 		tkn_i++;
 	}
 
