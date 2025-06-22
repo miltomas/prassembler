@@ -175,7 +175,8 @@ int mem_node_handle(struct mem_ParserResults *results, struct mem_Tokens *tokens
 }
 
 int mem_parser_tokens(struct tkn_TokenParser *state,
-					  struct mem_Tokens *tokens) {
+					  struct mem_Tokens *tokens,
+					  EOptionalSize size) {
 	struct tkn_Arena *arena = tkn_arena_create();
 
 	struct mem_ParserState mem_state = {.transition = &mem_transition_default,
@@ -192,8 +193,14 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 	const char *saveptr = state->line + state->column;
 
 	results.word = tkn_word_get(state, &saveptr, arena);
+
+	if (size)
+		results.word = tkn_word_get(state, &saveptr, arena);
+	if (!results.word)
+		goto error;
 	if (*results.word != '[')
 		goto error;
+
 	while ((results.word = tkn_word_get(state, &saveptr, arena)) != NULL) {
 
 		if (*results.word == ']') {
@@ -241,9 +248,9 @@ error:
 	return 0;
 }
 
-int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target) {
+int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target, EOptionalSize size) {
 	struct mem_Tokens tokens = {0};
-	if (!mem_parser_tokens(state, &tokens))
+	if (!mem_parser_tokens(state, &tokens, size))
 		return 0;
 	return 1;
 }

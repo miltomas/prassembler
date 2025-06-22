@@ -24,6 +24,36 @@ static const char *const g_tkn_conflict_map[] = {
 #define TKN_DECLARE_LABEL_CONFLICT(type)                                       \
 	type == TKN_LABEL ? "Empty label" : g_tkn_conflict_map[type]
 
+//
+// EXPECTS
+//
+
+struct GperfSize {
+	const char *name;
+	const ESize size;
+};
+
+const char *lookup_sizes(register const char *str, register size_t len);
+
+static inline int tkn_memaccess_expect(const char *str, EOptionalSize *size) {
+	*size = SIZE_NONE;
+
+	if (*str == '[' || *str == ']')
+		return 1;
+
+	const struct GperfSize *gperf =
+		(struct GperfSize *)lookup_sizes(str, strlen(str));
+	if (!gperf)
+		return 0;
+
+	*size = (EOptionalSize)gperf->size;
+	return 1;
+}
+
+// 
+// EXPECTS
+//
+
 void tkn_parser_label_add(struct tkn_TokenParser *state, struct Label label,
 						  struct tkn_ParseResult *results, ETokenType type) {
 
@@ -149,10 +179,12 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 		struct tkn_ParseResult results = {0};
 		ETokenType type;
 
-		if (word[0] == '[' || word[0] == ']') {
+		EOptionalSize mem_size = SIZE_NONE;
+		if (tkn_memaccess_expect(word, &mem_size)) {
 			type = token->type = TKN_MEMACCESS;
+
 			int old_col = state->column;
-			results.succeded = mem_try_parse(state, &token->mem);
+			results.succeded = mem_try_parse(state, &token->mem, mem_size);
 			saveptr += state->column - old_col;
 			
 		} else {

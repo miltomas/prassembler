@@ -1,0 +1,14 @@
+%{
+#include <string.h>
+#include "assembler.h"
+%}
+
+struct GperfSize {
+	const char *name;
+	const ESize size;
+};
+%%
+byte, BYTE
+word, WORD
+dword, DWORD
+qword, QWORD
