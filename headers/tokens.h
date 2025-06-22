@@ -20,6 +20,7 @@ struct tkn_TokenParser {
 	int label_buf_n;
 	int label_buf_i;
 	struct Label *label_buf;
+	int label_read_i;
 };
 
 struct tkn_ParseResult {
@@ -44,13 +45,14 @@ void tkn_parser_label_add(struct tkn_TokenParser *state, struct Label label,
 
 // free last line before calling again!
 extern int tkn_parser_line(struct tkn_TokenParser *state,
-						   struct Token *(*tkn_buf)[TKN_LINE_MAX]);
+						   struct Token *(*tkn_buf)[TKN_LINE_MAX], int *tkn_i);
 
 struct tkn_Arena;
 struct tkn_Arena *tkn_arena_create();
 void tkn_arena_destroy(struct tkn_Arena *);
 
-char *tkn_word_get(struct tkn_TokenParser *state, const char **str, struct tkn_Arena *arena);
+char *tkn_word_get(struct tkn_TokenParser *state, const char **str,
+				   struct tkn_Arena *arena);
 
 typedef void (*tkn_LabelCallback)(struct tkn_TokenParser *state, struct Label,
 								  struct tkn_ParseResult *, ETokenType);

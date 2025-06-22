@@ -206,14 +206,22 @@ struct Register {
 	};
 };
 
+struct Label {
+	char *value;
+};
+
 typedef struct {
 	uint8_t is_base : 1;
 	uint8_t is_si : 1;
 	uint8_t is_displacement : 1;
+	uint8_t is_label : 1;
 	struct Register base;
 	struct Register si_reg;
 	struct Immediate si_imm;
-	struct Immediate displacement;
+	union {
+		struct Immediate displacement;
+		struct Label label;
+	};
 	EOptionalSize size;
 } MemAccess;
 
@@ -242,10 +250,6 @@ typedef enum {
 
 struct Prefix {
 	EPrefixType type;
-};
-
-struct Label {
-	char *value;
 };
 
 struct Token {

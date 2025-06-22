@@ -50,7 +50,7 @@ static inline int tkn_memaccess_expect(const char *str, EOptionalSize *size) {
 	return 1;
 }
 
-// 
+//
 // EXPECTS
 //
 
@@ -71,6 +71,12 @@ void tkn_parser_label_add(struct tkn_TokenParser *state, struct Label label,
 	state->label_buf[state->label_buf_i++] = label;
 }
 
+struct Label tkn_parser_label_get(struct tkn_TokenParser *state) {
+	if (state->label_read_i == state->label_buf_i)
+		return (struct Label){ NULL };
+	return state->label_buf[state->label_read_i++];
+}
+
 void tkn_parser_line_clear(struct tkn_TokenParser *state) {
 	if (state->line) {
 		free((void *)state->line);
@@ -81,6 +87,7 @@ void tkn_parser_line_clear(struct tkn_TokenParser *state) {
 		free(state->label_buf[i].value);
 	}
 	state->label_buf_i = 0;
+	state->label_read_i = 0;
 }
 
 typedef void (*tkn_LabelCallback)(struct tkn_TokenParser *state, struct Label,
@@ -100,7 +107,7 @@ ETokenType tkn_parse_token(struct tkn_TokenParser *state,
 	if (strchr(TKN_OPERATOR_CHARS, *word)) {
 		return TKN_OPERATOR;
 	}
-	
+
 	char *const colon = strchr(word, ':');
 	if (colon) {
 		*colon = '\0';
@@ -152,7 +159,7 @@ char *tkn_parser_getline(struct tkn_TokenParser *state, size_t *n) {
 }
 
 int tkn_parser_line(struct tkn_TokenParser *state,
-					struct Token *(*tkn_buf)[TKN_LINE_MAX]) {
+					struct Token *(*tkn_buf)[TKN_LINE_MAX], int *tkn_i) {
 	tkn_parser_line_clear(state);
 
 	size_t n = 128;
@@ -165,16 +172,16 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 	const char *word, *saveptr;
 	saveptr = state->line;
 
-	int tkn_i = 0;
+	*tkn_i = 0;
 	while ((word = tkn_word_get(state, &saveptr, word_arena)) != NULL) {
 
-		if (tkn_i == TKN_LINE_MAX) {
+		if (*tkn_i == TKN_LINE_MAX) {
 			PERRLICO("Too many tokens!\n", state->line_num, (u_long)0);
 			g_tkn_error = 1;
 			break;
 		}
 
-		struct Token *token = (*tkn_buf)[tkn_i];
+		struct Token *token = (*tkn_buf)[*tkn_i];
 
 		struct tkn_ParseResult results = {0};
 		ETokenType type;
@@ -212,7 +219,7 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 			g_tkn_error = 1;
 			continue;
 		}
-		tkn_i++;
+		(*tkn_i)++;
 	}
 
 	tkn_arena_destroy(word_arena);
