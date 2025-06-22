@@ -12,7 +12,11 @@ int main(int argc, char *argv[]) {
 	if (files_init(&file_in, &file_out, &opts) == EXIT_FAILURE)
 		return EXIT_FAILURE;
 
-	sym_table_setup();
+	if (sym_table_setup())
+		return EXIT_FAILURE;
+	if (files_fstate_init())
+		return EXIT_FAILURE;
+
 	if (traverse_file(file_in))
 		return EXIT_FAILURE;
 

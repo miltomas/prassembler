@@ -165,8 +165,8 @@ typedef enum {
 struct Token;
 struct Instruction;
 struct InstrFuncs {
-	int (*validate)(int cnt, struct Token *tokens);
-	int16_t (*encode)(struct Instruction *instr);
+	int (*validate)(int cnt, struct Token **tokens);
+	int16_t (*encode)(int *byte_count, struct Token **tokens);
 };
 struct Instruction {
 	struct InstrFuncs funcs;

@@ -1,6 +1,19 @@
 #include "options.h"
+#include "files.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+struct GlobalFileState g_fstate;
+
+int files_fstate_init() {
+	g_fstate.output_n = 1024;
+	g_fstate.encoded_output = malloc(g_fstate.output_n);
+	if (!g_fstate.encoded_output) {
+		perror(ERR "Uh oh");
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
+}
 
 int files_init(FILE **file_in, FILE **file_out, struct opt_options *opts) {
 	if (opts->filename_in == NULL) {
