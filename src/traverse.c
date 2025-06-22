@@ -49,8 +49,10 @@ int line_form_check(struct Token *buf[TKN_LINE_MAX], int tkn_i) {
     return 1;
 }
 
+
 // local output file position counter
 uint fpos;
+char *encoded_output;
 int traverse_file(FILE *file_in) { struct Token *buf[TKN_LINE_MAX];
 
 	struct tkn_TokenParser *parser = tkn_parser_create(file_in);
@@ -58,10 +60,13 @@ int traverse_file(FILE *file_in) { struct Token *buf[TKN_LINE_MAX];
 	int tkn_i;
 	prep_buf(buf, TKN_LINE_MAX);
 	while (tkn_parser_line(parser, &buf, &tkn_i) != -1) {
+		if (tkn_i == 0)
+			continue;
 		if (!line_form_check(buf, tkn_i)) {
 			PERRLICO("Malformed line form!\n", parser->line_num - 1, (u_long)0);
 			g_tkn_error = 1;
 		}
+
 		struct Label cur;
 		while ((cur = tkn_parser_label_get(parser)).value != NULL) {
 			struct LabelResolution *data = malloc(sizeof(struct LabelResolution));

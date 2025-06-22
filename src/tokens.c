@@ -214,6 +214,8 @@ int tkn_parser_line(struct tkn_TokenParser *state,
 
 		if (*word == ',')
 			continue;
+		if (results.label_declared)
+			continue;
 		if (type == TKN_OPERATOR) {
 			PDIAGLINE(state, ERR, "Unexpected operator\n");
 			g_tkn_error = 1;
