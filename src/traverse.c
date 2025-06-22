@@ -2,6 +2,7 @@
 #include "files.h"
 #include "symbols.h"
 #include "tokens.h"
+#include "unresolved_symbols.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -70,15 +71,10 @@ static inline void save_labels(struct tkn_TokenParser *parser) {
 	}
 }
 
-int validate_encode(struct tkn_TokenParser *parser,
-								  struct Token *buf[TKN_LINE_MAX],
-								  int tkn_i) {
+typedef void (*sym_Err_Callback)(struct UnresolvedInstruction *instr);
 
-	int i = 0;
-	while (buf[i++]->type != TKN_INSTRUCTION) {}
-	struct Instruction instr = buf[i - 1]->instr;
-
-	for (; i < tkn_i; i++) {
+void validate_resolve(sym_Err_Callback scallback, struct Token **buf, int tkn_i, int start_i) {
+	for (int i = start_i; i < tkn_i; i++) {
 		struct Immediate *imm_field = NULL;
 		if (buf[i]->type == TKN_LABEL) {
 			imm_field = &buf[i]->imm;
@@ -90,11 +86,29 @@ int validate_encode(struct tkn_TokenParser *parser,
 
 		struct LabelResolution *ret = sym_table_find(buf[i]->label);
 		if (!ret) {
-			// enqueue
+			struct UnresolvedInstruction *instr = malloc(sizeof(struct UnresolvedInstruction) + tkn_i * sizeof(struct Token *));
+
+			for (int i = 0; i < tkn_i; i++) {
+				struct Token *token = malloc(sizeof(struct Token));
+				*token = *buf[i];
+				instr->tokens[i] = token;
+			}
+
+			scallback(instr);
 			continue;
 		}
 		*imm_field = (struct Immediate){ .size = QWORD, .value64 = ret->position };
 	}
+}
+int validate_encode(struct tkn_TokenParser *parser,
+								  struct Token *buf[TKN_LINE_MAX],
+								  int tkn_i) {
+
+	int i = 0;
+	while (buf[i++]->type != TKN_INSTRUCTION) {}
+	struct Instruction instr = buf[i - 1]->instr;
+
+	validate_resolve(unres_list_add, buf, tkn_i, i);
 
 	if (!instr.funcs.validate(tkn_i, buf)) {
 		PERRLICO("Invalid instruction form!\n", parser->line_num, parser->column);

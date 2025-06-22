@@ -15,6 +15,12 @@ struct LabelResolution {
 	uint position;
 };
 
+struct sym_Keys {
+	int n;
+	int i;
+	const char **buf;
+};
+
 struct LabelResolution *sym_table_find(struct Label key);
 ESymResults sym_table_add(struct Label key, struct LabelResolution *data);
 int sym_table_setup(void);

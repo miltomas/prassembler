@@ -8,11 +8,7 @@
 
 static struct hsearch_data htab;
 
-static struct sym_Keys {
-	int n;
-	int i;
-	const char **buf;
-} keys;
+static struct sym_Keys keys;
 
 static void sym_keys_push(char *key) {
 	if (keys.i == keys.n) {
