@@ -70,7 +70,7 @@ static inline void save_labels(struct tkn_TokenParser *parser) {
 	}
 }
 
-static inline int validate_encode(struct tkn_TokenParser *parser,
+int validate_encode(struct tkn_TokenParser *parser,
 								  struct Token *buf[TKN_LINE_MAX],
 								  int tkn_i) {
 
@@ -91,7 +91,9 @@ static inline int validate_encode(struct tkn_TokenParser *parser,
 		struct LabelResolution *ret = sym_table_find(buf[i]->label);
 		if (!ret) {
 			// enqueue
+			continue;
 		}
+		*imm_field = (struct Immediate){ .size = QWORD, .value64 = ret->position };
 	}
 
 	if (!instr.funcs.validate(tkn_i, buf)) {
