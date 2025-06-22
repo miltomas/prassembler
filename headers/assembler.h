@@ -182,12 +182,20 @@ struct Immediate {
 	ESize size;
 };
 
+typedef enum {
+	SIZE_NONE = 0,
+	SIZE_BYTE = 1 << 0,
+	SIZE_WORD = 1 << 1,
+	SIZE_DWORD = 1 << 2,
+	SIZE_QWORD = 1 << 3,
+} EOptionalSize;
+
 typedef struct {
-	ESize target_size;
-	ESize scale;
-	EGPRegister index;
-	EGPRegister base;
-	int32_t displacement;
+	struct Register *base;
+	struct Register *si_reg;
+	struct Immediate *si_imm;
+	struct Immediate *displacement;
+	EOptionalSize size;
 } MemAccess;
 
 struct Register {
