@@ -285,8 +285,13 @@ int mem_try_parse(struct tkn_TokenParser *state, MemAccess **target,
 			(*target)->is_si = 1;
 			(*target)->si_imm = token->imm;
 		} else if (mem_type == MEM_BASE) {
+			(*target)->is_base = 1;
 			(*target)->base = token->reg;
+		} else if (tkn_type == TKN_LABEL) {
+			(*target)->is_label = 1;
+			(*target)->label = token->label;
 		} else {
+			(*target)->is_displacement = 1;
 			(*target)->displacement = token->imm;
 		}
 		free(token);
