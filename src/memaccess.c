@@ -113,7 +113,7 @@ struct mem_ParserResults {
 	struct mem_ParserState fsm;
 };
 
-int mem_transition_handle(struct mem_ParserResults *results,
+static inline int mem_transition_handle(struct mem_ParserResults *results,
 						  struct mem_Tokens *tokens) {
 	mem_StateNodeTransition *t = results->fsm.transition;
 	mem_StateNode *n = NULL;
@@ -157,7 +157,7 @@ int mem_flags_apply(struct mem_ParserResults *results, struct mem_Tokens *tokens
 	return 0;
 }
 
-int mem_node_handle(struct mem_ParserResults *results, struct mem_Tokens *tokens) {
+static inline int mem_node_handle(struct mem_ParserResults *results, struct mem_Tokens *tokens) {
 	// free unused token
 	free(results->token);
 
