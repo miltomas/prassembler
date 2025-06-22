@@ -222,6 +222,11 @@ int mem_parser_tokens(struct tkn_TokenParser *state,
 			break;
 		}
 
+		if (results.token->type == TKN_IMMEDIATE && !tkn_parse_results.succeded) {
+			PDIAGLINE(state, ERR, "Malformed immediate!\n");
+			g_tkn_error = 1;
+		}
+
 		if (results.fsm.is_transitioning) {
 			results.is_error = mem_transition_handle(&results, tokens);
 		} else {
