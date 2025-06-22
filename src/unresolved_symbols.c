@@ -1,4 +1,5 @@
 #include "unresolved_symbols.h"
+#include "tokens.h"
 #include <sys/types.h>
 
 static struct UnresInstrList {
@@ -18,4 +19,8 @@ void unres_list_add(struct UnresolvedInstruction *instr) {
 
 struct UnresolvedInstruction *unres_list_get() {
 	return unres_list.first;
+}
+
+void unres_sym_handle(struct UnresolvedInstruction *instr) {
+	g_tkn_error = 1;
 }

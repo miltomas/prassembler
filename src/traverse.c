@@ -73,45 +73,55 @@ static inline void save_labels(struct tkn_TokenParser *parser) {
 
 typedef void (*sym_Err_Callback)(struct UnresolvedInstruction *instr);
 
-void validate_resolve(sym_Err_Callback scallback, struct Token **buf, int tkn_i, int start_i) {
+int validate_resolve(sym_Err_Callback scallback, struct Token **buf, int tkn_i,
+					 int start_i) {
+	int all_fine = 1;
 	for (int i = start_i; i < tkn_i; i++) {
 		struct Immediate *imm_field = NULL;
 		if (buf[i]->type == TKN_LABEL) {
 			imm_field = &buf[i]->imm;
 		} else if (buf[i]->type == TKN_MEMACCESS && buf[i]->mem->is_label) {
 			imm_field = &buf[i]->mem->displacement;
-		} 
+		}
 		if (!imm_field)
 			continue;
 
 		struct LabelResolution *ret = sym_table_find(buf[i]->label);
 		if (!ret) {
-			struct UnresolvedInstruction *instr = malloc(sizeof(struct UnresolvedInstruction) + tkn_i * sizeof(struct Token *));
-
+			struct UnresolvedInstruction *instr =
+				malloc(sizeof(struct UnresolvedInstruction) +
+					   tkn_i * sizeof(struct Token *));
+			instr->token_count = tkn_i;
+			instr->fpos = g_fstate.fpos;
 			for (int i = 0; i < tkn_i; i++) {
 				struct Token *token = malloc(sizeof(struct Token));
 				*token = *buf[i];
 				instr->tokens[i] = token;
 			}
 
+			all_fine = 0;
 			scallback(instr);
 			continue;
 		}
-		*imm_field = (struct Immediate){ .size = QWORD, .value64 = ret->position };
+		*imm_field =
+			(struct Immediate){.size = QWORD, .value64 = ret->position};
 	}
+	return all_fine;
 }
+
 int validate_encode(struct tkn_TokenParser *parser,
-								  struct Token *buf[TKN_LINE_MAX],
-								  int tkn_i) {
+					struct Token *buf[TKN_LINE_MAX], int tkn_i) {
 
 	int i = 0;
-	while (buf[i++]->type != TKN_INSTRUCTION) {}
+	while (buf[i++]->type != TKN_INSTRUCTION) {
+	}
 	struct Instruction instr = buf[i - 1]->instr;
 
 	validate_resolve(unres_list_add, buf, tkn_i, i);
 
 	if (!instr.funcs.validate(tkn_i, buf)) {
-		PERRLICO("Invalid instruction form!\n", parser->line_num, parser->column);
+		PERRLICO("Invalid instruction form!\n", parser->line_num,
+				 parser->column);
 		return 0;
 	}
 
@@ -120,11 +130,12 @@ int validate_encode(struct tkn_TokenParser *parser,
 
 	if (g_fstate.fpos + bytes >= g_fstate.output_n) {
 		g_fstate.output_n *= 2;
-		g_fstate.encoded_output = realloc(g_fstate.encoded_output, g_fstate.output_n);
+		g_fstate.encoded_output =
+			realloc(g_fstate.encoded_output, g_fstate.output_n);
 	}
 
 	memcpy(g_fstate.encoded_output, &encoded, bytes);
-	
+
 	g_fstate.fpos += bytes;
 	return 1;
 }
@@ -138,7 +149,6 @@ int traverse_file(FILE *file_in) {
 	prep_buf(buf, TKN_LINE_MAX);
 	while (tkn_parser_line(parser, &buf, &tkn_i) != -1) {
 		save_labels(parser);
-		printf("%d", g_fstate.fpos);
 
 		if (tkn_i == 0)
 			continue;
@@ -154,8 +164,30 @@ int traverse_file(FILE *file_in) {
 
 		free_buf(buf, tkn_i);
 		prep_buf(buf, tkn_i);
+
+		printf("%d\n", g_fstate.fpos);
 	}
 	free_buf(buf, TKN_LINE_MAX);
+
+	struct UnresolvedInstruction *unres_instr = unres_list_get();
+
+	while (unres_instr != NULL) {
+		int i = 0;
+		while (unres_instr->tokens[i++]->type != TKN_INSTRUCTION) {
+		}
+		struct Instruction instr = unres_instr->tokens[i - 1]->instr;
+
+		if (!validate_resolve(unres_sym_handle, unres_instr->tokens,
+							  unres_instr->token_count, i)) {
+			PERRLICO("Undefined label!\n", parser->line_num - 1, (u_long)0);
+		}
+
+		int bytes = 0;
+		int16_t encoded = instr.funcs.encode(&bytes, unres_instr->tokens);
+		memcpy(g_fstate.encoded_output + unres_instr->fpos, &encoded, bytes);
+
+		unres_instr = unres_instr->next;
+	}
 
 	tkn_parser_destroy(parser);
 	return 0;

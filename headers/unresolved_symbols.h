@@ -12,5 +12,6 @@ struct UnresolvedInstruction {
 
 void unres_list_add(struct UnresolvedInstruction *instr);
 struct UnresolvedInstruction *unres_list_get();
+void unres_sym_handle(struct UnresolvedInstruction *instr);
 	
 #endif
