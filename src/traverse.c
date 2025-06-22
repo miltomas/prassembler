@@ -61,7 +61,7 @@ static inline void save_labels(struct tkn_TokenParser *parser) {
 		ESymResults ret = sym_table_add(cur, data);
 		
 		if (ret == SYM_DUPLICATE) {
-			PERRLICO("Redefinition of label!\n", parser->line_num - 1, parser->column);
+			PERRLICO("Redefinition of label '%s'!\n", parser->line_num - 1, parser->column, cur.value);
 			g_tkn_error = 1;
 		}
 		if (ret == SYM_MAX) {
