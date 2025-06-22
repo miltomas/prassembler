@@ -74,20 +74,23 @@ static inline void save_labels(struct tkn_TokenParser *parser) {
 typedef void (*sym_Err_Callback)(struct UnresolvedInstruction *instr);
 
 int validate_resolve(sym_Err_Callback scallback, struct Token **buf, int tkn_i,
-					 int start_i) {
+					 int start_i, int once) {
 	int all_fine = 1;
 	for (int i = start_i; i < tkn_i; i++) {
 		struct Immediate *imm_field = NULL;
+		struct Label label;
 		if (buf[i]->type == TKN_LABEL) {
 			imm_field = &buf[i]->imm;
+			label = buf[i]->label;
 		} else if (buf[i]->type == TKN_MEMACCESS && buf[i]->mem->is_label) {
 			imm_field = &buf[i]->mem->displacement;
+			label = buf[i]->mem->label;
 		}
 		if (!imm_field)
 			continue;
 
-		struct LabelResolution *ret = sym_table_find(buf[i]->label);
-		if (!ret) {
+		struct LabelResolution *ret = sym_table_find(label);
+		if (!ret && (all_fine || !once)) {
 			struct UnresolvedInstruction *instr =
 				malloc(sizeof(struct UnresolvedInstruction) +
 					   tkn_i * sizeof(struct Token *));
@@ -96,15 +99,24 @@ int validate_resolve(sym_Err_Callback scallback, struct Token **buf, int tkn_i,
 			for (int i = 0; i < tkn_i; i++) {
 				struct Token *token = malloc(sizeof(struct Token));
 				*token = *buf[i];
+				if (buf[i]->type == TKN_MEMACCESS) {
+					MemAccess *memaccess = calloc(1, sizeof(MemAccess));
+					token->mem = memaccess;
+					*memaccess = *buf[i]->mem;
+				}
 				instr->tokens[i] = token;
 			}
 
 			all_fine = 0;
 			scallback(instr);
-			continue;
 		}
-		*imm_field =
-			(struct Immediate){.size = QWORD, .value64 = ret->position};
+		if (!ret) {
+			*imm_field =
+				(struct Immediate){.size = QWORD, .value64 = 0};
+		} else {
+			*imm_field =
+				(struct Immediate){.size = QWORD, .value64 = ret->position};
+		}
 	}
 	return all_fine;
 }
@@ -117,7 +129,7 @@ int validate_encode(struct tkn_TokenParser *parser,
 	}
 	struct Instruction instr = buf[i - 1]->instr;
 
-	validate_resolve(unres_list_add, buf, tkn_i, i);
+	validate_resolve(unres_list_add, buf, tkn_i, i, 1);
 
 	if (!instr.funcs.validate(tkn_i, buf)) {
 		PERRLICO("Invalid instruction form!\n", parser->line_num,
@@ -178,7 +190,7 @@ int traverse_file(FILE *file_in) {
 		struct Instruction instr = unres_instr->tokens[i - 1]->instr;
 
 		if (!validate_resolve(unres_sym_handle, unres_instr->tokens,
-							  unres_instr->token_count, i)) {
+							  unres_instr->token_count, i, 0)) {
 			PERRLICO("Undefined label!\n", parser->line_num - 1, (u_long)0);
 		}
 
