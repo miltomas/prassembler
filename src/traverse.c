@@ -11,7 +11,7 @@ static inline void free_buf(struct Token *buf[TKN_LINE_MAX], int n) {
 
 static inline void prep_buf(struct Token *buf[TKN_LINE_MAX], int n) {
 	for (int i = 0; i < n; i++) {
-		buf[i] = malloc(n * sizeof(struct Token));
+		buf[i] = malloc(sizeof(struct Token));
 	}
 }
 
@@ -49,9 +49,28 @@ int line_form_check(struct Token *buf[TKN_LINE_MAX], int tkn_i) {
     return 1;
 }
 
-
 // local output file position counter
 uint fpos;
+
+static inline void save_labels(struct tkn_TokenParser *parser) {
+	struct Label cur;
+
+	while ((cur = tkn_parser_label_get(parser)).value != NULL) {
+		struct LabelResolution *data = malloc(sizeof(struct LabelResolution));
+		data->position = fpos;
+		ESymResults ret = sym_table_add(cur, data);
+		
+		if (ret == SYM_DUPLICATE) {
+			PERRLICO("Redefinition of label!\n", parser->line_num - 1, parser->column);
+			g_tkn_error = 1;
+		}
+		if (ret == SYM_MAX) {
+			PERRLICO("Maximum labels reached!\n", parser->line_num - 1, parser->column);
+			g_tkn_error = 1;
+		}
+	}
+}
+
 char *encoded_output;
 int traverse_file(FILE *file_in) { struct Token *buf[TKN_LINE_MAX];
 
@@ -60,20 +79,17 @@ int traverse_file(FILE *file_in) { struct Token *buf[TKN_LINE_MAX];
 	int tkn_i;
 	prep_buf(buf, TKN_LINE_MAX);
 	while (tkn_parser_line(parser, &buf, &tkn_i) != -1) {
+		save_labels(parser);
+
 		if (tkn_i == 0)
 			continue;
+
 		if (!line_form_check(buf, tkn_i)) {
 			PERRLICO("Malformed line form!\n", parser->line_num - 1, (u_long)0);
 			g_tkn_error = 1;
 		}
 
-		struct Label cur;
-		while ((cur = tkn_parser_label_get(parser)).value != NULL) {
-			struct LabelResolution *data = malloc(sizeof(struct LabelResolution));
-			data->position = fpos;
-			sym_table_add(cur, data);
-		}
-		
+
 		free_buf(buf, tkn_i);
 		prep_buf(buf, tkn_i);
 	}

@@ -17,7 +17,7 @@ static struct sym_Keys {
 static void sym_keys_push(char *key) {
 	if (keys.i == keys.n) {
 		keys.n *= 2;
-		keys.buf = realloc(keys.buf, keys.n);
+		keys.buf = realloc(keys.buf, keys.n * sizeof(char *));
 		if (!keys.buf)
 			perror("keys: ");
 	}
@@ -64,5 +64,6 @@ int sym_table_setup() {
 void sym_table_destroy() {
 	for (int i = 0; i < keys.i; i++)
 		free((void *)keys.buf[i]);
+	free(keys.buf);
 	hdestroy_r(&htab);
 }
