@@ -15,6 +15,10 @@ int files_fstate_init() {
 	return EXIT_SUCCESS;
 }
 
+void files_fstate_write(FILE *file_out) {
+	fwrite(g_fstate.encoded_output, 1, g_fstate.fpos, file_out);
+}
+
 int files_init(FILE **file_in, FILE **file_out, struct opt_options *opts) {
 	if (opts->filename_in == NULL) {
 		fprintf(stderr, WARN "Input file not found! Falling back to stdin\n");

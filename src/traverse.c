@@ -74,7 +74,7 @@ static inline void save_labels(struct tkn_TokenParser *parser) {
 typedef void (*sym_Err_Callback)(struct UnresolvedInstruction *instr);
 
 int validate_resolve(sym_Err_Callback scallback, struct Token **buf, int tkn_i,
-					 int start_i, int once) {
+					 int start_i) {
 	int all_fine = 1;
 	for (int i = start_i; i < tkn_i; i++) {
 		struct Immediate *imm_field = NULL;
@@ -90,7 +90,7 @@ int validate_resolve(sym_Err_Callback scallback, struct Token **buf, int tkn_i,
 			continue;
 
 		struct LabelResolution *ret = sym_table_find(label);
-		if (!ret && (all_fine || !once)) {
+		if (!ret && all_fine) {
 			struct UnresolvedInstruction *instr =
 				malloc(sizeof(struct UnresolvedInstruction) +
 					   tkn_i * sizeof(struct Token *));
@@ -129,7 +129,7 @@ int validate_encode(struct tkn_TokenParser *parser,
 	}
 	struct Instruction instr = buf[i - 1]->instr;
 
-	validate_resolve(unres_list_add, buf, tkn_i, i, 1);
+	validate_resolve(unres_list_add, buf, tkn_i, i);
 
 	if (!instr.funcs.validate(tkn_i, buf)) {
 		PERRLICO("Invalid instruction form!\n", parser->line_num,
@@ -137,16 +137,13 @@ int validate_encode(struct tkn_TokenParser *parser,
 		return 0;
 	}
 
-	int bytes = 0;
-	int16_t encoded = instr.funcs.encode(&bytes, buf);
-
-	if (g_fstate.fpos + bytes >= g_fstate.output_n) {
+	if (g_fstate.fpos + 16 >= g_fstate.output_n) {
 		g_fstate.output_n *= 2;
 		g_fstate.encoded_output =
 			realloc(g_fstate.encoded_output, g_fstate.output_n);
 	}
 
-	memcpy(g_fstate.encoded_output, &encoded, bytes);
+	int bytes = instr.funcs.encode(g_fstate.encoded_output + g_fstate.fpos, buf);
 
 	g_fstate.fpos += bytes;
 	return 1;
@@ -190,13 +187,11 @@ int traverse_file(FILE *file_in) {
 		struct Instruction instr = unres_instr->tokens[i - 1]->instr;
 
 		if (!validate_resolve(unres_sym_handle, unres_instr->tokens,
-							  unres_instr->token_count, i, 0)) {
+							  unres_instr->token_count, i)) {
 			PERRLICO("Undefined label!\n", parser->line_num - 1, (u_long)0);
 		}
 
-		int bytes = 0;
-		int16_t encoded = instr.funcs.encode(&bytes, unres_instr->tokens);
-		memcpy(g_fstate.encoded_output + unres_instr->fpos, &encoded, bytes);
+		instr.funcs.encode(g_fstate.encoded_output + g_fstate.fpos, unres_instr->tokens);
 
 		unres_instr = unres_instr->next;
 	}

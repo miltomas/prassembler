@@ -1,5 +1,6 @@
 #include "files.h"
 #include "symbols.h"
+#include "tokens.h"
 #include "traverse.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -20,5 +21,9 @@ int main(int argc, char *argv[]) {
 	if (traverse_file(file_in))
 		return EXIT_FAILURE;
 
-	return EXIT_SUCCESS;
+	if (!g_tkn_error) {
+		files_fstate_write(file_out);
+	}
+
+	return g_tkn_error;
 }
